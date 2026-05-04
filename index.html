@@ -237,6 +237,17 @@
         display: inline-block;
     }
 
+    /* CHART TITLE LABEL */
+    .chart-title {
+        font-size: 12px;
+        font-weight: 700;
+        color: #475569;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+        margin-bottom: 6px;
+        padding: 0 4px;
+    }
+
     /* CHART CONTAINERS */
     .chart-container {
         position: relative;
@@ -587,13 +598,14 @@
             </div>
         </div>
     </div>
+
     <!-- INDICADORES AVANZADOS -->
     <div class="section">
         <h2 class="section-title">📊 Indicadores Avanzados</h2>
         <div class="grid-2">
             <div class="card info">
                 <div class="card-header">Índice de Satisfacción General</div>
- <div class="metric-value" id="indiceGeneral">0%</div>
+                <div class="metric-value" id="indiceGeneral">0%</div>
                 <p class="metric-subtext">Promedio de todas las dimensiones de satisfacción</p>
             </div>
             <div class="card success">
@@ -613,9 +625,7 @@
             </div>
         </div>
     </div>
-</div>
 
-        
     <!-- DISTRIBUCIONES -->
     <div class="section">
         <h2 class="section-title">🎯 Análisis Univariado</h2>
@@ -630,8 +640,11 @@
 
         <div id="tab1" class="tab-content active">
             <div class="grid-2">
-                <div class="chart-container">
-                    <canvas id="chartEstablecimiento"></canvas>
+                <div>
+                    <p class="chart-title">Distribución por Establecimiento</p>
+                    <div class="chart-container">
+                        <canvas id="chartEstablecimiento"></canvas>
+                    </div>
                 </div>
                 <div class="table-container">
                     <table id="tableEstablecimiento">
@@ -646,8 +659,11 @@
 
         <div id="tab2" class="tab-content">
             <div class="grid-2">
-                <div class="chart-container">
-                    <canvas id="chartEspecialidad"></canvas>
+                <div>
+                    <p class="chart-title">Distribución por Especialidad del Servicio</p>
+                    <div class="chart-container">
+                        <canvas id="chartEspecialidad"></canvas>
+                    </div>
                 </div>
                 <div class="table-container">
                     <table id="tableEspecialidad">
@@ -662,65 +678,107 @@
 
         <div id="tab3" class="tab-content">
             <div class="grid-2">
-                <div class="chart-container">
-                    <canvas id="chartTiempoEspera"></canvas>
+                <div>
+                    <p class="chart-title">Tiempo de Espera</p>
+                    <div class="chart-container">
+                        <canvas id="chartTiempoEspera"></canvas>
+                    </div>
                 </div>
-                <div class="chart-container">
-                    <canvas id="chartCordialidadAdmin"></canvas>
+                <div>
+                    <p class="chart-title">Cordialidad del Personal Administrativo</p>
+                    <div class="chart-container">
+                        <canvas id="chartCordialidadAdmin"></canvas>
+                    </div>
                 </div>
             </div>
             <div class="grid-2">
-                <div class="chart-container">
-                    <canvas id="chartCordialidadEnf"></canvas>
+                <div>
+                    <p class="chart-title">Cordialidad del Personal de Enfermería</p>
+                    <div class="chart-container">
+                        <canvas id="chartCordialidadEnf"></canvas>
+                    </div>
                 </div>
-                <div class="chart-container">
+                <div>
+                    <p class="chart-title">Cordialidad del Personal Médico</p>
+                    <div class="chart-container">
  <canvas id="chartCordialidadMed"></canvas>
+                    </div>
                 </div>
             </div>
             <div class="grid-2">
-                <div class="chart-container">
-                    <canvas id="chartTiempoConsulta"></canvas>
+                <div>
+                    <p class="chart-title">Conformidad con el Tiempo de Consulta</p>
+                    <div class="chart-container">
+                        <canvas id="chartTiempoConsulta"></canvas>
+                    </div>
                 </div>
-                <div class="chart-container">
-                    <canvas id="chartAtenciónFarmacia"></canvas>
+                <div>
+                    <p class="chart-title">Atención del Encargado de Farmacias</p>
+                    <div class="chart-container">
+                        <canvas id="chartAtenciónFarmacia"></canvas>
+                    </div>
                 </div>
             </div>
         </div>
 
         <div id="tab4" class="tab-content">
             <div class="grid-2">
-                <div class="chart-container">
-                    <canvas id="chartUltimaConsulta"></canvas>
+                <div>
+                    <p class="chart-title">Última Consulta Realizada Por</p>
+                    <div class="chart-container">
+                        <canvas id="chartUltimaConsulta"></canvas>
+                    </div>
                 </div>
-                <div class="chart-container">
-                    <canvas id="chartMedicamentos"></canvas>
+                <div>
+                    <p class="chart-title">Recepción de Medicamentos Médicos</p>
+                    <div class="chart-container">
+                        <canvas id="chartMedicamentos"></canvas>
+                    </div>
                 </div>
             </div>
             <div class="grid-2">
-                <div class="chart-container">
-                    <canvas id="chartEstudios"></canvas>
+                <div>
+                    <p class="chart-title">Recepción de Estudios Médicos Realizados por el Dr.</p>
+                    <div class="chart-container">
+                        <canvas id="chartEstudios"></canvas>
+                    </div>
                 </div>
-                <div class="chart-container">
-                    <canvas id="chartCordialidadEstudios"></canvas>
+                <div>
+                    <p class="chart-title">Cordialidad del Encargado de Estudios Médicos</p>
+                    <div class="chart-container">
+                        <canvas id="chartCordialidadEstudios"></canvas>
+                    </div>
                 </div>
             </div>
         </div>
 
         <div id="tab5" class="tab-content">
             <div class="grid-3">
-                <div class="chart-container small">
-                    <canvas id="chartValoracionFisica"></canvas>
+                <div>
+                    <p class="chart-title">Valoración Visual Física del Hospital</p>
+                    <div class="chart-container small">
+                        <canvas id="chartValoracionFisica"></canvas>
+                    </div>
                 </div>
-                <div class="chart-container small">
-                    <canvas id="chartDisponibilidad"></canvas>
+                <div>
+                    <p class="chart-title">Disponibilidad de Accesorios</p>
+                    <div class="chart-container small">
+                        <canvas id="chartDisponibilidad"></canvas>
+                    </div>
                 </div>
-                <div class="chart-container small">
-                    <canvas id="chartLimpieza"></canvas>
+                <div>
+                    <p class="chart-title">Limpieza e Higiene del Servicio</p>
+                    <div class="chart-container small">
+                        <canvas id="chartLimpieza"></canvas>
+                    </div>
                 </div>
             </div>
             <div class="grid-3">
-                <div class="chart-container small">
-                    <canvas id="chartSeguridad"></canvas>
+                <div>
+                    <p class="chart-title">Seguridad Dentro del Hospital</p>
+                    <div class="chart-container small">
+                        <canvas id="chartSeguridad"></canvas>
+                    </div>
                 </div>
             </div>
         </div>
@@ -739,6 +797,7 @@
         </div>
 
         <div id="cross1" class="tab-content active">
+            <p class="chart-title">Satisfacción General por Establecimiento (%)</p>
             <div class="chart-container" style="height: 450px;">
                 <canvas id="chartCrossEstabSatisfaccion"></canvas>
             </div>
@@ -753,6 +812,7 @@
         </div>
 
         <div id="cross2" class="tab-content">
+            <p class="chart-title">Cordialidad Promedio (Admin + Enfermería + Médico) por Especialidad</p>
             <div class="chart-container" style="height: 450px;">
                 <canvas id="chartCrossEspecCordialidad"></canvas>
             </div>
@@ -767,6 +827,7 @@
         </div>
 
         <div id="cross3" class="tab-content">
+            <p class="chart-title">Enfermedad Crónica vs Recepción de Medicamentos Médicos</p>
             <div class="chart-container" style="height: 450px;">
                 <canvas id="chartCrossCronicosMedicamentos"></canvas>
             </div>
@@ -781,6 +842,7 @@
         </div>
 
         <div id="cross4" class="tab-content">
+            <p class="chart-title">Tiempo de Espera vs Cordialidad del Personal Administrativo</p>
             <div class="chart-container" style="height: 450px;">
                 <canvas id="chartCrossTiempoEsperaCordialidad"></canvas>
             </div>
@@ -795,6 +857,7 @@
         </div>
 
         <div id="cross5" class="tab-content">
+            <p class="chart-title">Evaluación Integral de Infraestructura por Establecimiento (Limpieza · Valoración · Seguridad)</p>
             <div class="chart-container" style="height: 450px;">
                 <canvas id="chartCrossInfraestructura"></canvas>
             </div>
@@ -813,23 +876,34 @@
     <div class="section">
         <h2 class="section-title">👥 Análisis Demográfico</h2>
         <div class="grid-3">
-            <div class="chart-container small">
-                <canvas id="chartEdad"></canvas>
+            <div>
+                <p class="chart-title">Distribución por Grupos de Edad</p>
+                <div class="chart-container small">
+                    <canvas id="chartEdad"></canvas>
+                </div>
             </div>
-            <div class="chart-container small">
-                <canvas id="chartCronicos"></canvas>
+            <div>
+                <p class="chart-title">Pacientes con Enfermedad Crónica</p>
+                <div class="chart-container small">
+                    <canvas id="chartCronicos"></canvas>
+                </div>
             </div>
-            <div class="chart-container small">
-                <canvas id="chartDiscapacidad"></canvas>
+            <div>
+                <p class="chart-title">Pacientes con Discapacidad</p>
+                <div class="chart-container small">
+                    <canvas id="chartDiscapacidad"></canvas>
+                </div>
             </div>
         </div>
-        <div class="chart-container small" style="max-width: 400px;">
-            <canvas id="chartIndígenas"></canvas>
+        <div style="max-width: 400px;">
+            <p class="chart-title">Pertenencia a Pueblo Indígena</p>
+            <div class="chart-container small">
+                <canvas id="chartIndígenas"></canvas>
+            </div>
         </div>
     </div>
 
-    
- 
+    <!-- INDICADORES AVANZADOS placeholder removed - moved above -->
 
 <script>
     // CONFIGURACIÓN
@@ -854,13 +928,13 @@
                 return;
             }
 
-            // Actualizar interfaz
-            actualizarUI();
-            mostrarMensaje(`✅ Se cargaron ${datosGlobales.length} registros exitosamente`, 'success');
-            document.getElementById('lastUpdate').textContent = new Date().toLocaleTimeString('es-ES');
-            document.getElementById('totalRecords').textContent = datosGlobales.length;
-            document.getElementById('status').textContent = 'Sistema activo';
-            document.getElementById('exportBtn').disabled = false;
+        // Actualizar interfaz
+        actualizarUI();
+        mostrarMensaje(`✅ Se cargaron ${datosGlobales.length} registros exitosamente`, 'success');
+        document.getElementById('lastUpdate').textContent = new Date().toLocaleTimeString('es-ES');
+        document.getElementById('totalRecords').textContent = datosGlobales.length;
+        document.getElementById('status').textContent = 'Sistema activo';
+        document.getElementById('exportBtn').disabled = false;
         } catch (error) {
             mostrarMensaje('❌ Error al cargar datos: ' + error.message, 'error');
             console.error(error);
@@ -870,11 +944,10 @@
     // ACTUALIZAR UI
     function actualizarUI() {
         actualizarResumenGeneral();
+        actualizarIndicadoresAvanzados();
         actualizarAnalisisUnivariado();
         actualizarCrucesVariables();
         actualizarAnalisisDemografico();
-        actualizarTablaCompleta();
-        actualizarIndicadoresAvanzados();
     }
 
     // RESUMEN GENERAL
@@ -892,16 +965,7 @@
         document.getElementById('indigenas').textContent = indigenas;
         document.getElementById('indigenasPct').textContent = `${((indigenas/total)*100).toFixed(1)}%`;
     }
- // INDICADORES AVANZADOS
-    function actualizarIndicadoresAvanzados() {
-        // Índice General de Satisfacción
-        const satisfacciones = datosGlobales.map(r => {
-            const cordAdmin = convertirSatisfaccion(r['CORDIALIDAD DEL PERSONAL ADMINISTRATIVO']);
-            const cordEnf = convertirSatisfaccion(r['CORDIALIDAD DEL PERSONAL de enfermería']);
-            const cordMed = convertirSatisfaccion(r['CORDIALIDAD DEL PERSONAL MÉDICO']);
-            const tiempoConsulta = convertirSatisfaccion(r['TIEMPO DE CONSULTA']);
-            return (cordAdmin + cordEnf + cordMed + tiempoConsulta) / 4;
-        });
+
     // ANÁLISIS UNIVARIADO
     function actualizarAnalisisUnivariado() {
         // Establecimientos
@@ -1027,49 +1091,19 @@
         crearGrafico('chartIndígenas', Object.keys(indigenas), Object.values(indigenas), 'pie', 'Pueblos Indígenas');
     }
 
-    // TABLA COMPLETA
-    function actualizarTablaCompleta() {
-        const tbody = document.querySelector('#datosCompletos tbody');
-        tbody.innerHTML = '';
+    // TABLA COMPLETA — eliminada por privacidad (nombres/cédulas no públicos)
+    function actualizarTablaCompleta() { /* omitida */ }
 
-        // Actualizar filtros
-        const establecimientos = [...new Set(datosGlobales.map(r => r['Establecimiento']))];
-        const especialidades = [...new Set(datosGlobales.map(r => r['Especialidades del Servicio']))];
-
-        const filterEst = document.getElementById('filterEstablecimiento');
-        const filterEsp = document.getElementById('filterEspecialidad');
-
-        const valEst = filterEst.value;
-        const valEsp = filterEsp.value;
-
-        filterEst.innerHTML = '<option value="">Todos</option>';
-        establecimientos.forEach(e => {
-            filterEst.innerHTML += `<option value="${e}" ${e === valEst ? 'selected' : ''}>${e}</option>`;
+    // INDICADORES AVANZADOS
+    function actualizarIndicadoresAvanzados() {
+        // Índice General de Satisfacción
+        const satisfacciones = datosGlobales.map(r => {
+            const cordAdmin = convertirSatisfaccion(r['CORDIALIDAD DEL PERSONAL ADMINISTRATIVO']);
+            const cordEnf = convertirSatisfaccion(r['CORDIALIDAD DEL PERSONAL de enfermería']);
+            const cordMed = convertirSatisfaccion(r['CORDIALIDAD DEL PERSONAL MÉDICO']);
+            const tiempoConsulta = convertirSatisfaccion(r['TIEMPO DE CONSULTA']);
+            return (cordAdmin + cordEnf + cordMed + tiempoConsulta) / 4;
         });
-filterEsp.innerHTML = '<option value="">Todos</option>';
-        especialidades.forEach(e => {
-            filterEsp.innerHTML += `<option value="${e}" ${e === valEsp ? 'selected' : ''}>${e}</option>`;
-        });
-
-        datosGlobales.forEach(r => {
-            const row = tbody.insertRow();
-            row.innerHTML = `
-                <td>${r.ID}</td>
-                <td>${r.Cédula}</td>
-                <td>${r.Nombre}</td>
-                <td>${r.EDAD}</td>
-                <td>${r.Establecimiento}</td>
-                <td>${r['Especialidades del Servicio']}</td>
-                <td><span class="badge ${r['ENFERMEDAD CRÓNICA'] === 'SI' ? 'danger' : 'success'}">${r['ENFERMEDAD CRÓNICA']}</span></td>
-                <td><span class="badge ${r.DISCAPACIDAD === 'SI' ? 'danger' : 'success'}">${r.DISCAPACIDAD}</span></td>
-                <td><span class="badge ${r['PERTENECE A PUEBLO INDÍGENA'] === 'SI' ? 'primary' : 'success'}">${r['PERTENECE A PUEBLO INDÍGENA']}</span></td>
-                <td>${r['tiempo de espera:']}</td>
-                <td>${calcularSatisfaccion(r)}</td>
-            `;
-        });
-    }
-
-   
         const indiceGeneral = (satisfacciones.reduce((a,b) => a+b, 0) / satisfacciones.length * 100).toFixed(1);
         document.getElementById('indiceGeneral').textContent = indiceGeneral + '%';
 
@@ -1487,14 +1521,14 @@ contador[valor] = (contador[valor] || 0) + 1;
     // UTILIDADES
     function generarColores(cantidad) {
         const colores = [
-            'rgba(59, 130, 246, 0.7)',
-            'rgba(220, 38, 38, 0.7)',
-            'rgba(16, 185, 129, 0.7)',
-            'rgba(245, 158, 11, 0.7)',
-            'rgba(139, 92, 246, 0.7)',
-            'rgba(20, 184, 184, 0.7)',
-            'rgba(236, 72, 153, 0.7)',
-            'rgba(251, 146, 60, 0.7)'
+            'rgba(20, 184, 166, 0.75)',
+            'rgba(139, 92, 246, 0.75)',
+            'rgba(16, 185, 129, 0.75)',
+            'rgba(245, 158, 11, 0.75)',
+            'rgba(236, 72, 153, 0.75)',
+            'rgba(251, 146, 60, 0.75)',
+            'rgba(99, 102, 241, 0.75)',
+            'rgba(52, 211, 153, 0.75)'
         ];
 
         if (cantidad <= colores.length) return colores.slice(0, cantidad);
@@ -1521,36 +1555,12 @@ contador[valor] = (contador[valor] || 0) + 1;
         document.getElementById(tabName).classList.add('active');
     }
 
-    function filtrarTabla() {
-        const search = document.getElementById('searchInput').value.toLowerCase();
-        const filtroEst = document.getElementById('filterEstablecimiento').value;
-        const filtroEsp = document.getElementById('filterEspecialidad').value;
+    // filtrarTabla eliminada — tabla con datos personales removida
+    function filtrarTabla() { /* omitida por privacidad */ }
 
-        document.querySelectorAll('#datosCompletos tbody tr').forEach(row => {
-            const nombre = row.cells[2].textContent.toLowerCase();
-            const cedula = row.cells[1].textContent.toLowerCase();
-            const est = row.cells[4].textContent;
-            const esp = row.cells[5].textContent;
+    // exportarCSV eliminada — no se exportan datos personales
+    function exportarCSV() { alert('Exportación deshabilitada: los datos personales (nombre, cédula) están protegidos.'); }
 
-            const matchSearch = nombre.includes(search) || cedula.includes(search);
-            const matchEst = !filtroEst || est === filtroEst;
-            const matchEsp = !filtroEsp || esp === filtroEsp;
-
-            row.style.display = matchSearch && matchEst && matchEsp ? '' : 'none';
-        });
-    }
- function exportarCSV() {
-        let csv = 'ID,Cédula,Nombre,Edad,Establecimiento,Especialidad,Crónico,Discapacidad,Indígena\n';
-        datosGlobales.forEach(r => {
-            csv += `${r.ID},"${r.Cédula}","${r.Nombre}",${r.EDAD},"${r.Establecimiento}","${r['Especialidades del Servicio']}",${r['ENFERMEDAD CRÓNICA']},${r.DISCAPACIDAD},${r['PERTENECE A PUEBLO INDÍGENA']}\n`;
-        });
-
-        const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
-        const link = document.createElement('a');
-        link.href = URL.createObjectURL(blob);
-        link.download = `datos_salud_${new Date().toISOString().split('T')[0]}.csv`;
-        link.click();
-    }
 
     function toggleAutoRefresh() {
         const btn = document.getElementById('autoRefreshBtn');
