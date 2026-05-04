@@ -1,0 +1,1612 @@
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Dashboard de Calidad en Servicios de Salud</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/3.9.1/chart.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/PapaParse/5.4.1/papaparse.min.js"></script>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+    :root {
+        --primary: #1e3a8a;
+        --primary-light: #3b82f6;
+        --secondary: #dc2626;
+        --accent: #f59e0b;
+        --success: #10b981;
+        --warning: #f97316;
+        --dark: #0f172a;
+        --light: #f8fafc;
+        --border: #e2e8f0;
+        --text: #1e293b;
+    }
+
+    body {
+        font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        background: linear-gradient(135deg, #f8fafc 0%, #e0e7ff 100%);
+        color: var(--text);
+        min-height: 100vh;
+        padding: 20px;
+    }
+
+    .container {
+        max-width: 1600px;
+        margin: 0 auto;
+    }
+
+    header {
+        background: linear-gradient(135deg, var(--primary) 0%, var(--primary-light) 100%);
+        color: white;
+        padding: 30px;
+        border-radius: 12px;
+        margin-bottom: 30px;
+        box-shadow: 0 10px 30px rgba(30, 58, 138, 0.2);
+    }
+
+    header h1 {
+        font-size: 28px;
+        margin-bottom: 10px;
+        font-weight: 700;
+    }
+
+    header p {
+        font-size: 14px;
+        opacity: 0.9;
+        margin-bottom: 15px;
+    }
+
+    .status-bar {
+        display: flex;
+        gap: 20px;
+        margin-top: 15px;
+        font-size: 13px;
+    }
+
+    .status-item {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        background: rgba(255,255,255,0.2);
+        padding: 8px 12px;
+        border-radius: 6px;
+    }
+
+    .status-dot {
+        width: 10px;
+        height: 10px;
+        border-radius: 50%;
+        background: var(--success);
+        animation: pulse 2s infinite;
+    }
+
+    @keyframes pulse {
+        0%, 100% { opacity: 1; }
+        50% { opacity: 0.5; }
+    }
+
+    .controls {
+        background: white;
+        padding: 20px;
+        border-radius: 12px;
+        margin-bottom: 30px;
+        box-shadow: 0 4px 6px rgba(0,0,0,0.07);
+        display: flex;
+        gap: 15px;
+        align-items: center;
+        flex-wrap: wrap;
+    }
+
+    input, button, select {
+        padding: 10px 15px;
+        border: 1px solid var(--border);
+        border-radius: 8px;
+        font-size: 14px;
+    }
+
+    button {
+        background: var(--primary-light);
+        color: white;
+        cursor: pointer;
+        font-weight: 600;
+        transition: all 0.3s ease;
+        border: none;
+    }
+
+    button:hover {
+        background: var(--primary);
+        transform: translateY(-2px);
+        box-shadow: 0 4px 12px rgba(30, 58, 138, 0.3);
+    }
+
+    button:active {
+        transform: translateY(0);
+    }
+
+    .refresh-status {
+        color: var(--success);
+        font-size: 13px;
+        font-weight: 600;
+    }
+
+    /* GRID LAYOUTS */
+    .grid-2 {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+        gap: 20px;
+        margin-bottom: 30px;
+    }
+
+    .grid-3 {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+        gap: 20px;
+        margin-bottom: 30px;
+    }
+
+    .grid-4 {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+        gap: 15px;
+        margin-bottom: 30px;
+    }
+
+    /* CARDS */
+    .card {
+        background: white;
+        border-radius: 12px;
+        padding: 20px;
+        box-shadow: 0 4px 6px rgba(0,0,0,0.07);
+        transition: all 0.3s ease;
+    }
+
+    .card:hover {
+        box-shadow: 0 12px 24px rgba(0,0,0,0.12);
+        transform: translateY(-4px);
+    }
+
+    .card-header {
+        font-size: 13px;
+        font-weight: 700;
+        color: var(--primary);
+        text-transform: uppercase;
+      
+ letter-spacing: 0.5px;
+        margin-bottom: 12px;
+    }
+
+    .card h3 {
+        font-size: 24px;
+        font-weight: 700;
+        color: var(--dark);
+        margin-bottom: 8px;
+    }
+
+    .card p {
+        font-size: 13px;
+        color: #64748b;
+    }
+
+    .metric-value {
+        font-size: 32px;
+        font-weight: 800;
+        color: var(--primary);
+        margin: 10px 0;
+    }
+
+    .metric-subtext {
+        font-size: 12px;
+        color: #94a3b8;
+        margin-top: 8px;
+    }
+
+    .card.info {
+        background: linear-gradient(135deg, rgba(59, 130, 246, 0.1) 0%, rgba(147, 197, 253, 0.1) 100%);
+        border-left: 4px solid var(--primary-light);
+    }
+
+    .card.success {
+        background: linear-gradient(135deg, rgba(16, 185, 129, 0.1) 0%, rgba(167, 243, 208, 0.1) 100%);
+        border-left: 4px solid var(--success);
+    }
+
+    .card.warning {
+        background: linear-gradient(135deg, rgba(249, 115, 22, 0.1) 0%, rgba(254, 215, 170, 0.1) 100%);
+        border-left: 4px solid var(--warning);
+    }
+
+    .card.danger {
+        background: linear-gradient(135deg, rgba(220, 38, 38, 0.1) 0%, rgba(254, 202, 202, 0.1) 100%);
+        border-left: 4px solid var(--secondary);
+    }
+
+    /* SECTION */
+    .section {
+        margin-bottom: 40px;
+    }
+
+    .section-title {
+        font-size: 20px;
+        font-weight: 700;
+        color: var(--dark);
+        margin-bottom: 20px;
+        padding-bottom: 12px;
+        border-bottom: 3px solid var(--primary-light);
+        display: inline-block;
+    }
+
+    /* CHART CONTAINERS */
+    .chart-container {
+        position: relative;
+        height: 400px;
+        background: white;
+        border-radius: 12px;
+        padding: 20px;
+        box-shadow: 0 4px 6px rgba(0,0,0,0.07);
+    }
+
+    .chart-container.small {
+        height: 300px;
+    }
+
+    .chart-container canvas {
+        max-height: 360px;
+    }
+
+    /* TABLE */
+    .table-container {
+        background: white;
+        border-radius: 12px;
+        padding: 20px;
+        box-shadow: 0 4px 6px rgba(0,0,0,0.07);
+        overflow-x: auto;
+    }
+
+    table {
+        width: 100%;
+        border-collapse: collapse;
+        font-size: 13px;
+    }
+
+    table thead {
+        background: linear-gradient(135deg, var(--primary) 0%, var(--primary-light) 100%);
+        color: white;
+    }
+
+    table th {
+        padding: 12px;
+        text-align: left;
+        font-weight: 700;
+    }
+
+    table td {
+        padding: 12px;
+        border-bottom: 1px solid var(--border);
+    }
+
+    table tbody tr:hover {
+        background: #f0f9ff;
+    }
+
+    /* TABS */
+    .tabs {
+        display: flex;
+        gap: 5px;
+        margin-bottom: 20px;
+        border-bottom: 2px solid var(--border);
+    }
+
+    .tab {
+        padding: 12px 20px;
+        background: none;
+        border: none;
+        cursor: pointer;
+        font-weight: 600;
+        color: #64748b;
+        font-size: 14px;
+        position: relative;
+        transition: all 0.3s ease;
+    }
+
+    .tab.active {
+        color: var(--primary);
+    }
+
+    .tab.active::after {
+        content: '';
+        position: absolute;
+        bottom: -2px;
+        left: 0;
+        right: 0;
+        height: 3px;
+        background: var(--primary);
+    }
+
+    .tab-content {
+        display: none;
+    }
+
+    .tab-content.active {
+        display: block;
+        animation: fadeIn 0.3s ease;
+    }
+
+    @keyframes fadeIn {
+        from { opacity: 0; }
+        to { opacity: 1; }
+    }
+
+    /* BADGE */
+    .badge {
+        display: inline-block;
+        padding: 4px 12px;
+        border-radius: 20px;
+        font-size: 12px;
+        font-weight: 700;
+        margin: 4px 0;
+    }
+
+    .badge.primary {
+        background: rgba(59, 130, 246, 0.2);
+        color: var(--primary);
+    }
+
+    .badge.success {
+        background: rgba(16, 185, 129, 0.2);
+        color: var(--success);
+    }
+
+    .badge.warning {
+        background: rgba(249, 115, 22, 0.2);
+        color: var(--warning);
+    }
+
+    .badge.danger {
+        background: rgba(220, 38, 38, 0.2);
+        color: var(--secondary);
+    }
+ /* LOADING */
+    .loader {
+        border: 3px solid var(--border);
+        border-top: 3px solid var(--primary);
+        border-radius: 50%;
+        width: 40px;
+        height: 40px;
+        animation: spin 1s linear infinite;
+    }
+
+    @keyframes spin {
+        0% { transform: rotate(0deg); }
+        100% { transform: rotate(360deg); }
+    }
+
+    /* FILTER PANEL */
+    .filter-panel {
+        background: white;
+        border-radius: 12px;
+        padding: 20px;
+        box-shadow: 0 4px 6px rgba(0,0,0,0.07);
+        margin-bottom: 30px;
+    }
+
+    .filter-group {
+        margin-bottom: 15px;
+    }
+
+    .filter-group label {
+        display: block;
+        font-weight: 600;
+        margin-bottom: 8px;
+        font-size: 14px;
+        color: var(--dark);
+    }
+
+    .filter-group select {
+        width: 100%;
+        padding: 10px;
+        border: 1px solid var(--border);
+        border-radius: 8px;
+    }
+
+    /* TOGGLE */
+    .toggle-switch {
+        position: relative;
+        display: inline-block;
+        width: 50px;
+        height: 24px;
+    }
+
+    .toggle-switch input {
+        opacity: 0;
+        width: 0;
+        height: 0;
+    }
+
+    .toggle-slider {
+        position: absolute;
+        cursor: pointer;
+        top: 0;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        background-color: var(--border);
+        transition: 0.4s;
+        border-radius: 24px;
+    }
+
+    .toggle-slider:before {
+        position: absolute;
+        content: "";
+        height: 18px;
+        width: 18px;
+        left: 3px;
+        bottom: 3px;
+        background-color: white;
+        transition: 0.4s;
+        border-radius: 50%;
+    }
+
+    input:checked + .toggle-slider {
+        background-color: var(--success);
+    }
+
+    input:checked + .toggle-slider:before {
+        transform: translateX(26px);
+    }
+
+    /* RESPONSIVE */
+    @media (max-width: 768px) {
+        .grid-2, .grid-3, .grid-4 {
+            grid-template-columns: 1fr;
+        }
+
+        header {
+            padding: 20px;
+        }
+
+        header h1 {
+            font-size: 22px;
+        }
+
+        .status-bar {
+            flex-direction: column;
+            gap: 10px;
+        }
+
+        .chart-container {
+            height: 300px;
+        }
+    }
+
+    /* TOOLTIP */
+    .tooltip {
+        position: relative;
+        display: inline-block;
+        cursor: help;
+    }
+
+    .tooltip .tooltiptext {
+        visibility: hidden;
+        width: 200px;
+        background-color: var(--dark);
+        color: white;
+        text-align: center;
+        border-radius: 6px;
+        padding: 8px;
+        position: absolute;
+        z-index: 1;
+        bottom: 125%;
+        left: 50%;
+        margin-left: -100px;
+        opacity: 0;
+        transition: opacity 0.3s;
+        font-size: 12px;
+    }
+
+    .tooltip:hover .tooltiptext {
+        visibility: visible;
+        opacity: 1;
+    }
+
+    .error-message {
+        background: #fee2e2;
+        color: #991b1b;
+        padding: 15px;
+        border-radius: 8px;
+        margin-bottom: 20px;
+        border-left: 4px solid var(--secondary);
+    }
+
+    .success-message {
+        background: #dcfce7;
+        color: #166534;
+        padding: 15px;
+        border-radius: 8px;
+        margin-bottom: 20px;
+        border-left: 4px solid var(--success);
+    }
+</style>
+
+</head>
+      
+<body>
+    <div class="container">
+        <!-- HEADER -->
+        <header>
+            <h1>📊 Dashboard de Calidad en Servicios de Salud</h1>
+            <p>Análisis estadístico integral con indicadores automáticos, cruces de variables y visualizaciones dinámicas</p>
+            <div class="status-bar">
+                <div class="status-item">
+                    <div class="status-dot"></div>
+                    <span id="status">Cargando datos...</span>
+                </div>
+                <div class="status-item">
+                    <span>Última actualización: <strong id="lastUpdate">--:--</strong></span>
+                </div>
+                <div class="status-item">
+                    <span>Registros: <strong id="totalRecords">0</strong></span>
+                  
+ </div>
+            </div>
+        </header>
+    <!-- CONTROLES -->
+    <div class="controls">
+        <input type="text" id="sheetId" placeholder="ID de Google Sheet" value="1OyssHqVC9VzGO5mUnLSVF42As5O9iGuwJ4Wcw04hOas" style="flex: 1; min-width: 300px;">
+        <button onclick="cargarDatos()">🔄 Cargar Datos</button>
+        <button onclick="exportarCSV()" id="exportBtn" disabled>📥 Exportar CSV</button>
+        <button onclick="toggleAutoRefresh()" id="autoRefreshBtn">⏱️ Auto-refresh OFF</button>
+    </div>
+
+    <div id="message"></div>
+
+    <!-- RESUMEN GENERAL -->
+    <div class="section">
+        <h2 class="section-title">📈 Resumen General</h2>
+        <div class="grid-4">
+            <div class="card info">
+                <div class="card-header">Total de Pacientes</div>
+                <div class="metric-value" id="totalPacientes">0</div>
+                <p>Registros procesados</p>
+            </div>
+            <div class="card success">
+                <div class="card-header">Con Enfermedad Crónica</div>
+                <div class="metric-value" id="cronicos">0</div>
+                <p id="cronicosPct">0%</p>
+            </div>
+            <div class="card warning">
+                <div class="card-header">Con Discapacidad</div>
+                <div class="metric-value" id="discapacidad">0</div>
+                <p id="discapacidadPct">0%</p>
+            </div>
+            <div class="card danger">
+                <div class="card-header">Pueblos Indígenas</div>
+                <div class="metric-value" id="indigenas">0</div>
+                <p id="indigenasPct">0%</p>
+            </div>
+        </div>
+    </div>
+
+    <!-- DISTRIBUCIONES -->
+    <div class="section">
+        <h2 class="section-title">🎯 Análisis Univariado</h2>
+        
+        <div class="tabs">
+            <button class="tab active" onclick="switchTab(event, 'tab1')">Establecimientos</button>
+            <button class="tab" onclick="switchTab(event, 'tab2')">Especialidades</button>
+            <button class="tab" onclick="switchTab(event, 'tab3')">Satisfacción</button>
+            <button class="tab" onclick="switchTab(event, 'tab4')">Tiempos</button>
+            <button class="tab" onclick="switchTab(event, 'tab5')">Infraestructura</button>
+        </div>
+
+        <div id="tab1" class="tab-content active">
+            <div class="grid-2">
+                <div class="chart-container">
+                    <canvas id="chartEstablecimiento"></canvas>
+                </div>
+                <div class="table-container">
+                    <table id="tableEstablecimiento">
+                        <thead>
+                            <tr><th>Establecimiento</th><th>Cantidad</th><th>%</th></tr>
+                        </thead>
+                        <tbody></tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+
+        <div id="tab2" class="tab-content">
+            <div class="grid-2">
+                <div class="chart-container">
+                    <canvas id="chartEspecialidad"></canvas>
+                </div>
+                <div class="table-container">
+                    <table id="tableEspecialidad">
+                        <thead>
+                            <tr><th>Especialidad</th><th>Cantidad</th><th>%</th></tr>
+                        </thead>
+                        <tbody></tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+
+        <div id="tab3" class="tab-content">
+            <div class="grid-2">
+                <div class="chart-container">
+                    <canvas id="chartTiempoEspera"></canvas>
+                </div>
+                <div class="chart-container">
+                    <canvas id="chartCordialidadAdmin"></canvas>
+                </div>
+            </div>
+            <div class="grid-2">
+                <div class="chart-container">
+                    <canvas id="chartCordialidadEnf"></canvas>
+                </div>
+                <div class="chart-container">
+ <canvas id="chartCordialidadMed"></canvas>
+                </div>
+            </div>
+            <div class="grid-2">
+                <div class="chart-container">
+                    <canvas id="chartTiempoConsulta"></canvas>
+                </div>
+                <div class="chart-container">
+                    <canvas id="chartAtenciónFarmacia"></canvas>
+                </div>
+            </div>
+        </div>
+
+        <div id="tab4" class="tab-content">
+            <div class="grid-2">
+                <div class="chart-container">
+                    <canvas id="chartUltimaConsulta"></canvas>
+                </div>
+                <div class="chart-container">
+                    <canvas id="chartMedicamentos"></canvas>
+                </div>
+            </div>
+            <div class="grid-2">
+                <div class="chart-container">
+                    <canvas id="chartEstudios"></canvas>
+                </div>
+                <div class="chart-container">
+                    <canvas id="chartCordialidadEstudios"></canvas>
+                </div>
+            </div>
+        </div>
+
+        <div id="tab5" class="tab-content">
+            <div class="grid-3">
+                <div class="chart-container small">
+                    <canvas id="chartValoracionFisica"></canvas>
+                </div>
+                <div class="chart-container small">
+                    <canvas id="chartDisponibilidad"></canvas>
+                </div>
+                <div class="chart-container small">
+                    <canvas id="chartLimpieza"></canvas>
+                </div>
+            </div>
+            <div class="grid-3">
+                <div class="chart-container small">
+                    <canvas id="chartSeguridad"></canvas>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- CRUCES DE VARIABLES -->
+    <div class="section">
+        <h2 class="section-title">🔗 Cruces de Variables Estratégicos</h2>
+        
+        <div class="tabs">
+            <button class="tab active" onclick="switchTab(event, 'cross1')">Establecimiento × Satisfacción</button>
+            <button class="tab" onclick="switchTab(event, 'cross2')">Especialidad × Cordialidad</button>
+            <button class="tab" onclick="switchTab(event, 'cross3')">Crónicos × Medicamentos</button>
+            <button class="tab" onclick="switchTab(event, 'cross4')">Tiempo Espera × Cordialidad</button>
+            <button class="tab" onclick="switchTab(event, 'cross5')">Infraestructura Completa</button>
+        </div>
+
+        <div id="cross1" class="tab-content active">
+            <div class="chart-container" style="height: 450px;">
+                <canvas id="chartCrossEstabSatisfaccion"></canvas>
+            </div>
+            <div class="table-container" style="margin-top: 20px;">
+                <table id="tableCrossEstabSatisfaccion">
+                    <thead>
+                        <tr><th>Establecimiento</th><th>Satisfacción Promedio</th><th>Muestras</th></tr>
+                    </thead>
+                    <tbody></tbody>
+                </table>
+            </div>
+        </div>
+
+        <div id="cross2" class="tab-content">
+            <div class="chart-container" style="height: 450px;">
+                <canvas id="chartCrossEspecCordialidad"></canvas>
+            </div>
+            <div class="table-container" style="margin-top: 20px;">
+                <table id="tableCrossEspecCordialidad">
+                    <thead>
+                        <tr><th>Especialidad</th><th>Cordialidad (Admin + Enf + Med)</th><th>Muestras</th></tr>
+                    </thead>
+                    <tbody></tbody>
+                </table>
+            </div>
+        </div>
+
+        <div id="cross3" class="tab-content">
+            <div class="chart-container" style="height: 450px;">
+                <canvas id="chartCrossCronicosMedicamentos"></canvas>
+            </div>
+            <div class="table-container" style="margin-top: 20px;">
+                <table id="tableCrossCronicosMedicamentos">
+                    <thead>
+<tr><th>Enfermedad Crónica</th><th>Recepción Medicamentos</th><th>Casos</th></tr>
+                    </thead>
+                    <tbody></tbody>
+                </table>
+            </div>
+        </div>
+
+        <div id="cross4" class="tab-content">
+            <div class="chart-container" style="height: 450px;">
+                <canvas id="chartCrossTiempoEsperaCordialidad"></canvas>
+            </div>
+            <div class="table-container" style="margin-top: 20px;">
+                <table id="tableCrossTiempoEsperaCordialidad">
+                    <thead>
+                        <tr><th>Tiempo Espera</th><th>Cordialidad Admin</th><th>Casos</th></tr>
+                    </thead>
+                    <tbody></tbody>
+                </table>
+            </div>
+        </div>
+
+        <div id="cross5" class="tab-content">
+            <div class="chart-container" style="height: 450px;">
+                <canvas id="chartCrossInfraestructura"></canvas>
+            </div>
+            <div class="table-container" style="margin-top: 20px;">
+                <table id="tableCrossInfraestructura">
+                    <thead>
+                        <tr><th>Establecimiento</th><th>Limpieza</th><th>Valoración Física</th><th>Seguridad</th></tr>
+                    </thead>
+                    <tbody></tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+
+    <!-- ANÁLISIS DEMOGRÁFICO -->
+    <div class="section">
+        <h2 class="section-title">👥 Análisis Demográfico</h2>
+        <div class="grid-3">
+            <div class="chart-container small">
+                <canvas id="chartEdad"></canvas>
+            </div>
+            <div class="chart-container small">
+                <canvas id="chartCronicos"></canvas>
+            </div>
+            <div class="chart-container small">
+                <canvas id="chartDiscapacidad"></canvas>
+            </div>
+        </div>
+        <div class="chart-container small" style="max-width: 400px;">
+            <canvas id="chartIndígenas"></canvas>
+        </div>
+    </div>
+
+    <!-- TABLA DE DATOS COMPLETA -->
+    <div class="section">
+        <h2 class="section-title">📋 Tabla de Datos Completa</h2>
+        <div class="filter-panel">
+            <div class="filter-group">
+                <label>Buscar:</label>
+                <input type="text" id="searchInput" placeholder="Buscar por nombre, cédula o establecimiento..." onkeyup="filtrarTabla()">
+            </div>
+            <div class="filter-group">
+                <label>Filtrar por establecimiento:</label>
+                <select id="filterEstablecimiento" onchange="filtrarTabla()">
+                    <option value="">Todos</option>
+                </select>
+            </div>
+            <div class="filter-group">
+                <label>Filtrar por especialidad:</label>
+                <select id="filterEspecialidad" onchange="filtrarTabla()">
+                    <option value="">Todos</option>
+                </select>
+            </div>
+        </div>
+        <div class="table-container">
+            <table id="datosCompletos">
+                <thead>
+                    <tr>
+                        <th>ID</th>
+                        <th>Cédula</th>
+                        <th>Nombre</th>
+                        <th>Edad</th>
+                        <th>Establecimiento</th>
+                        <th>Especialidad</th>
+                        <th>Crónico</th>
+                        <th>Discapacidad</th>
+                        <th>Indígena</th>
+                        <th>Tiempo Espera</th>
+                        <th>Satisfacción General</th>
+                    </tr>
+                </thead>
+                <tbody></tbody>
+            </table>
+        </div>
+    </div>
+
+    <!-- INDICADORES AVANZADOS -->
+    <div class="section">
+        <h2 class="section-title">📊 Indicadores Avanzados</h2>
+        <div class="grid-2">
+            <div class="card info">
+                <div class="card-header">Índice de Satisfacción General</div>
+ <div class="metric-value" id="indiceGeneral">0%</div>
+                <p class="metric-subtext">Promedio de todas las dimensiones de satisfacción</p>
+            </div>
+            <div class="card success">
+                <div class="card-header">Calidad de Infraestructura</div>
+                <div class="metric-value" id="indiceInfraestructura">0%</div>
+                <p class="metric-subtext">Promedio: Limpieza, Valoración Física y Seguridad</p>
+            </div>
+            <div class="card warning">
+                <div class="card-header">Cordialidad del Personal</div>
+                <div class="metric-value" id="indiceCordialidad">0%</div>
+                <p class="metric-subtext">Promedio: Admin, Enfermería y Médico</p>
+            </div>
+            <div class="card danger">
+                <div class="card-header">Eficiencia de Procesos</div>
+                <div class="metric-value" id="indiceEficiencia">0%</div>
+                <p class="metric-subtext">Basado en tiempos y disponibilidad</p>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+    // CONFIGURACIÓN
+    const SPREADSHEET_ID = '1OyssHqVC9VzGO5mUnLSVF42As5O9iGuwJ4Wcw04hOas';
+    const SHEET_NAME = 'DATOS';
+    const csvUrl = `https://docs.google.com/spreadsheets/d/${SPREADSHEET_ID}/gviz/tq?tqx=out:csv&sheet=${SHEET_NAME}`;
+
+    let datosGlobales = [];
+    let chartsInstances = {};
+    let autoRefreshInterval = null;
+
+    // CARGAR DATOS
+    async function cargarDatos() {
+        try {
+            mostrarMensaje('⏳ Cargando datos desde Google Sheets...', 'info');
+            const response = await fetch(csvUrl);
+            const csv = await response.text();
+            datosGlobales = Papa.parse(csv, { header: true }).data.filter(row => row.ID);
+            
+            if (datosGlobales.length === 0) {
+                mostrarMensaje('⚠️ No hay datos disponibles en la hoja DATOS', 'error');
+                return;
+            }
+
+            // Actualizar interfaz
+            actualizarUI();
+            mostrarMensaje(`✅ Se cargaron ${datosGlobales.length} registros exitosamente`, 'success');
+            document.getElementById('lastUpdate').textContent = new Date().toLocaleTimeString('es-ES');
+            document.getElementById('totalRecords').textContent = datosGlobales.length;
+            document.getElementById('status').textContent = 'Sistema activo';
+            document.getElementById('exportBtn').disabled = false;
+        } catch (error) {
+            mostrarMensaje('❌ Error al cargar datos: ' + error.message, 'error');
+            console.error(error);
+        }
+    }
+
+    // ACTUALIZAR UI
+    function actualizarUI() {
+        actualizarResumenGeneral();
+        actualizarAnalisisUnivariado();
+        actualizarCrucesVariables();
+        actualizarAnalisisDemografico();
+        actualizarTablaCompleta();
+        actualizarIndicadoresAvanzados();
+    }
+
+    // RESUMEN GENERAL
+    function actualizarResumenGeneral() {
+        const total = datosGlobales.length;
+        const cronicos = datosGlobales.filter(r => r['ENFERMEDAD CRÓNICA'] === 'SI').length;
+        const discapacitados = datosGlobales.filter(r => r['DISCAPACIDAD'] === 'SI').length;
+        const indigenas = datosGlobales.filter(r => r['PERTENECE A PUEBLO INDÍGENA'] === 'SI').length;
+
+        document.getElementById('totalPacientes').textContent = total;
+        document.getElementById('cronicos').textContent = cronicos;
+        document.getElementById('cronicosPct').textContent = `${((cronicos/total)*100).toFixed(1)}%`;
+        document.getElementById('discapacidad').textContent = discapacitados;
+        document.getElementById('discapacidadPct').textContent = `${((discapacitados/total)*100).toFixed(1)}%`;
+        document.getElementById('indigenas').textContent = indigenas;
+        document.getElementById('indigenasPct').textContent = `${((indigenas/total)*100).toFixed(1)}%`;
+    }
+
+    // ANÁLISIS UNIVARIADO
+    function actualizarAnalisisUnivariado() {
+        // Establecimientos
+ const establecimientos = contarCategorias('Establecimiento');
+        crearGrafico('chartEstablecimiento', Object.keys(establecimientos), Object.values(establecimientos), 'doughnut', 'Distribución por Establecimiento');
+        llenarTabla('tableEstablecimiento', establecimientos);
+
+        // Especialidades
+        const especialidades = contarCategorias('Especialidades del Servicio');
+        crearGrafico('chartEspecialidad', Object.keys(especialidades), Object.values(especialidades), 'doughnut', 'Distribución por Especialidad');
+        llenarTabla('tableEspecialidad', especialidades);
+
+        // Satisfacción
+        const tiempoEspera = contarCategorias('tiempo de espera:');
+        crearGrafico('chartTiempoEspera', Object.keys(tiempoEspera), Object.values(tiempoEspera), 'bar', 'Tiempo de Espera');
+
+        const cordialidad1 = contarCategorias('CORDIALIDAD DEL PERSONAL ADMINISTRATIVO');
+        crearGrafico('chartCordialidadAdmin', Object.keys(cordialidad1), Object.values(cordialidad1), 'bar', 'Cordialidad Personal Admin');
+
+        const cordialidad2 = contarCategorias('CORDIALIDAD DEL PERSONAL de enfermería');
+        crearGrafico('chartCordialidadEnf', Object.keys(cordialidad2), Object.values(cordialidad2), 'bar', 'Cordialidad Personal Enfermería');
+
+        const cordialidad3 = contarCategorias('CORDIALIDAD DEL PERSONAL MÉDICO');
+        crearGrafico('chartCordialidadMed', Object.keys(cordialidad3), Object.values(cordialidad3), 'bar', 'Cordialidad Personal Médico');
+
+        const tiempoConsulta = contarCategorias('TIEMPO DE CONSULTA');
+        crearGrafico('chartTiempoConsulta', Object.keys(tiempoConsulta), Object.values(tiempoConsulta), 'bar', 'Tiempo de Consulta');
+
+        const atencFarmacia = contarCategorias('ATENCIÓN DE ENCARGADO DE FARMACIAS');
+        crearGrafico('chartAtenciónFarmacia', Object.keys(atencFarmacia), Object.values(atencFarmacia), 'bar', 'Atención Farmacia');
+
+        // Tiempos
+        const ultimaConsulta = contarCategorias('ÚLTIMA CONSULTA REALIZADA POR');
+        crearGrafico('chartUltimaConsulta', Object.keys(ultimaConsulta), Object.values(ultimaConsulta), 'pie', 'Tipo de Consulta');
+
+        const medicamentos = contarCategorias('RECEPCIÓN DE MEDICAMENTOS MÉDICOS');
+        crearGrafico('chartMedicamentos', Object.keys(medicamentos), Object.values(medicamentos), 'bar', 'Recepción de Medicamentos');
+
+        const estudios = contarCategorias('RECEPCIÓN DE ESTUDIOS MÉDICOS REALIZADOS POR EL DR');
+        crearGrafico('chartEstudios', Object.keys(estudios), Object.values(estudios), 'bar', 'Recepción de Estudios');
+
+        const cordialidadEstudios = contarCategorias('CORDIALIDAD DEL ENCARGADO DE ESTUDIOS MÉDICOS');
+        crearGrafico('chartCordialidadEstudios', Object.keys(cordialidadEstudios), Object.values(cordialidadEstudios), 'bar', 'Cordialidad Estudios');
+
+        // Infraestructura
+        const valoracion = contarCategorias('VALORACIÓN VISUAL FÍSICA HOSPITAL');
+        crearGrafico('chartValoracionFisica', Object.keys(valoracion), Object.values(valoracion), 'doughnut', 'Valoración Física');
+
+        const disponibilidad = contarCategorias('DISPONIBILIDAD DE ACCESORIOS');
+        crearGrafico('chartDisponibilidad', Object.keys(disponibilidad), Object.values(disponibilidad), 'doughnut', 'Disponibilidad');
+
+        const limpieza = contarCategorias('LIMPIEZA E HIGIENE DEL SERVICIO');
+        crearGrafico('chartLimpieza', Object.keys(limpieza), Object.values(limpieza), 'doughnut', 'Limpieza e Higiene');
+
+        const seguridad = contarCategorias('SEGURIDAD DENTRO DEL HOSPITAL');
+        crearGrafico('chartSeguridad', Object.keys(seguridad), Object.values(seguridad), 'doughnut', 'Seguridad');
+    }
+
+    // CRUCES DE VARIABLES
+    function actualizarCrucesVariables() {
+        // 1. Establecimiento × Satisfacción General
+        const establecimientoSatisfaccion = cruzarVariables('Establecimiento', [
+            'CORDIALIDAD DEL PERSONAL ADMINISTRATIVO',
+            'CORDIALIDAD DEL PERSONAL de enfermería',
+            'CORDIALIDAD DEL PERSONAL MÉDICO',
+ 'TIEMPO DE CONSULTA'
+        ]);
+        crearGraficoCruce('chartCrossEstabSatisfaccion', establecimientoSatisfaccion, 'bar', 'Satisfacción por Establecimiento');
+        llenarTablaCruce('tableCrossEstabSatisfaccion', establecimientoSatisfaccion);
+
+        // 2. Especialidad × Cordialidad
+        const especCordialidad = cruzarVariables('Especialidades del Servicio', [
+            'CORDIALIDAD DEL PERSONAL ADMINISTRATIVO',
+            'CORDIALIDAD DEL PERSONAL de enfermería',
+            'CORDIALIDAD DEL PERSONAL MÉDICO'
+        ]);
+        crearGraficoCruce('chartCrossEspecCordialidad', especCordialidad, 'bar', 'Cordialidad por Especialidad');
+        llenarTablaCruceEspec('tableCrossEspecCordialidad', especCordialidad);
+
+        // 3. Crónicos × Medicamentos
+        const cronicosMedicamentos = cruzarCategoricas('ENFERMEDAD CRÓNICA', 'RECEPCIÓN DE MEDICAMENTOS MÉDICOS');
+        crearGraficoCruceMatriz('chartCrossCronicosMedicamentos', cronicosMedicamentos, 'Enfermedad Crónica vs Medicamentos');
+        llenarTablaCruceMatriz('tableCrossCronicosMedicamentos', cronicosMedicamentos);
+
+        // 4. Tiempo Espera × Cordialidad Admin
+        const tiempoEsperaCordialidad = cruzarCategoricas('tiempo de espera:', 'CORDIALIDAD DEL PERSONAL ADMINISTRATIVO');
+        crearGraficoCruceMatriz('chartCrossTiempoEsperaCordialidad', tiempoEsperaCordialidad, 'Tiempo Espera vs Cordialidad Admin');
+        llenarTablaCruceMatrizGeneral('tableCrossTiempoEsperaCordialidad', tiempoEsperaCordialidad);
+
+        // 5. Infraestructura (Limpieza × Valoración × Seguridad)
+        const infraestructura = cruzarVariablesInfraestructura();
+        crearGraficoInfraestructura('chartCrossInfraestructura', infraestructura, 'Evaluación Integral Infraestructura');
+        llenarTablaInfraestructura('tableCrossInfraestructura', infraestructura);
+    }
+
+    // ANÁLISIS DEMOGRÁFICO
+    function actualizarAnalisisDemografico() {
+        // Edad
+        const edadRanges = {
+            '0-18': 0, '19-30': 0, '31-40': 0, '41-50': 0, '51-60': 0, '60+': 0
+        };
+        datosGlobales.forEach(r => {
+            const edad = parseInt(r.EDAD) || 0;
+            if (edad <= 18) edadRanges['0-18']++;
+            else if (edad <= 30) edadRanges['19-30']++;
+            else if (edad <= 40) edadRanges['31-40']++;
+            else if (edad <= 50) edadRanges['41-50']++;
+            else if (edad <= 60) edadRanges['51-60']++;
+            else edadRanges['60+']++;
+        });
+        crearGrafico('chartEdad', Object.keys(edadRanges), Object.values(edadRanges), 'bar', 'Distribución por Edad');
+
+        // Crónicos
+        const cronicos = contarCategorias('ENFERMEDAD CRÓNICA');
+        crearGrafico('chartCronicos', Object.keys(cronicos), Object.values(cronicos), 'pie', 'Enfermedad Crónica');
+
+        // Discapacidad
+        const discapacidad = contarCategorias('DISCAPACIDAD');
+        crearGrafico('chartDiscapacidad', Object.keys(discapacidad), Object.values(discapacidad), 'pie', 'Discapacidad');
+
+        // Indígenas
+        const indigenas = contarCategorias('PERTENECE A PUEBLO INDÍGENA');
+        crearGrafico('chartIndígenas', Object.keys(indigenas), Object.values(indigenas), 'pie', 'Pueblos Indígenas');
+    }
+
+    // TABLA COMPLETA
+    function actualizarTablaCompleta() {
+        const tbody = document.querySelector('#datosCompletos tbody');
+        tbody.innerHTML = '';
+
+        // Actualizar filtros
+        const establecimientos = [...new Set(datosGlobales.map(r => r['Establecimiento']))];
+        const especialidades = [...new Set(datosGlobales.map(r => r['Especialidades del Servicio']))];
+
+        const filterEst = document.getElementById('filterEstablecimiento');
+        const filterEsp = document.getElementById('filterEspecialidad');
+
+        const valEst = filterEst.value;
+        const valEsp = filterEsp.value;
+
+        filterEst.innerHTML = '<option value="">Todos</option>';
+        establecimientos.forEach(e => {
+            filterEst.innerHTML += `<option value="${e}" ${e === valEst ? 'selected' : ''}>${e}</option>`;
+        });
+filterEsp.innerHTML = '<option value="">Todos</option>';
+        especialidades.forEach(e => {
+            filterEsp.innerHTML += `<option value="${e}" ${e === valEsp ? 'selected' : ''}>${e}</option>`;
+        });
+
+        datosGlobales.forEach(r => {
+            const row = tbody.insertRow();
+            row.innerHTML = `
+                <td>${r.ID}</td>
+                <td>${r.Cédula}</td>
+                <td>${r.Nombre}</td>
+                <td>${r.EDAD}</td>
+                <td>${r.Establecimiento}</td>
+                <td>${r['Especialidades del Servicio']}</td>
+                <td><span class="badge ${r['ENFERMEDAD CRÓNICA'] === 'SI' ? 'danger' : 'success'}">${r['ENFERMEDAD CRÓNICA']}</span></td>
+                <td><span class="badge ${r.DISCAPACIDAD === 'SI' ? 'danger' : 'success'}">${r.DISCAPACIDAD}</span></td>
+                <td><span class="badge ${r['PERTENECE A PUEBLO INDÍGENA'] === 'SI' ? 'primary' : 'success'}">${r['PERTENECE A PUEBLO INDÍGENA']}</span></td>
+                <td>${r['tiempo de espera:']}</td>
+                <td>${calcularSatisfaccion(r)}</td>
+            `;
+        });
+    }
+
+    // INDICADORES AVANZADOS
+    function actualizarIndicadoresAvanzados() {
+        // Índice General de Satisfacción
+        const satisfacciones = datosGlobales.map(r => {
+            const cordAdmin = convertirSatisfaccion(r['CORDIALIDAD DEL PERSONAL ADMINISTRATIVO']);
+            const cordEnf = convertirSatisfaccion(r['CORDIALIDAD DEL PERSONAL de enfermería']);
+            const cordMed = convertirSatisfaccion(r['CORDIALIDAD DEL PERSONAL MÉDICO']);
+            const tiempoConsulta = convertirSatisfaccion(r['TIEMPO DE CONSULTA']);
+            return (cordAdmin + cordEnf + cordMed + tiempoConsulta) / 4;
+        });
+        const indiceGeneral = (satisfacciones.reduce((a,b) => a+b, 0) / satisfacciones.length * 100).toFixed(1);
+        document.getElementById('indiceGeneral').textContent = indiceGeneral + '%';
+
+        // Índice Infraestructura
+        const infraestructuras = datosGlobales.map(r => {
+            const limpieza = convertirSatisfaccion(r['LIMPIEZA E HIGIENE DEL SERVICIO']);
+            const valoracion = convertirSatisfaccion(r['VALORACIÓN VISUAL FÍSICA HOSPITAL']);
+            const seguridad = convertirSatisfaccion(r['SEGURIDAD DENTRO DEL HOSPITAL']);
+            return (limpieza + valoracion + seguridad) / 3;
+        });
+        const indiceInfra = (infraestructuras.reduce((a,b) => a+b, 0) / infraestructuras.length * 100).toFixed(1);
+        document.getElementById('indiceInfraestructura').textContent = indiceInfra + '%';
+
+        // Índice Cordialidad
+        const cordialidades = datosGlobales.map(r => {
+            const cordAdmin = convertirSatisfaccion(r['CORDIALIDAD DEL PERSONAL ADMINISTRATIVO']);
+            const cordEnf = convertirSatisfaccion(r['CORDIALIDAD DEL PERSONAL de enfermería']);
+            const cordMed = convertirSatisfaccion(r['CORDIALIDAD DEL PERSONAL MÉDICO']);
+            return (cordAdmin + cordEnf + cordMed) / 3;
+        });
+        const indiceCord = (cordialidades.reduce((a,b) => a+b, 0) / cordialidades.length * 100).toFixed(1);
+        document.getElementById('indiceCordialidad').textContent = indiceCord + '%';
+
+        // Índice Eficiencia
+        const eficiencias = datosGlobales.map(r => {
+            const medicamentos = convertirDisponibilidad(r['RECEPCIÓN DE MEDICAMENTOS MÉDICOS']);
+            const estudios = convertirDisponibilidad(r['RECEPCIÓN DE ESTUDIOS MÉDICOS REALIZADOS POR EL DR']);
+            const accesorios = convertirSatisfaccion(r['DISPONIBILIDAD DE ACCESORIOS']);
+            return (medicamentos + estudios + accesorios) / 3;
+        });
+        const indiceEfic = (eficiencias.reduce((a,b) => a+b, 0) / eficiencias.length * 100).toFixed(1);
+        document.getElementById('indiceEficiencia').textContent = indiceEfic + '%';
+    }
+
+    // FUNCIONES DE ANÁLISIS
+    function contarCategorias(columna) {
+        const contador = {};
+        datosGlobales.forEach(r => {
+            const valor = r[columna] || 'Sin dato';
+contador[valor] = (contador[valor] || 0) + 1;
+        });
+        return contador;
+    }
+
+    function cruzarVariables(columnaAgrupamiento, columnasAnalisis) {
+        const resultado = {};
+        const grupos = {};
+
+        datosGlobales.forEach(r => {
+            const grupo = r[columnaAgrupamiento] || 'Sin dato';
+            if (!grupos[grupo]) grupos[grupo] = [];
+            grupos[grupo].push(r);
+        });
+
+        Object.keys(grupos).forEach(grupo => {
+            const registros = grupos[grupo];
+            let sumaTotal = 0;
+            let contador = 0;
+
+            registros.forEach(r => {
+                columnasAnalisis.forEach(col => {
+                    const valor = convertirSatisfaccion(r[col]);
+                    sumaTotal += valor;
+                    contador++;
+                });
+            });
+
+            resultado[grupo] = contador > 0 ? (sumaTotal / contador * 100).toFixed(1) : 0;
+        });
+
+        return resultado;
+    }
+
+    function cruzarCategoricas(col1, col2) {
+        const resultado = {};
+        const cats1 = [...new Set(datosGlobales.map(r => r[col1] || 'Sin dato'))];
+        const cats2 = [...new Set(datosGlobales.map(r => r[col2] || 'Sin dato'))];
+
+        cats1.forEach(c1 => {
+            cats2.forEach(c2 => {
+                const key = `${c1}|${c2}`;
+                resultado[key] = datosGlobales.filter(r => 
+                    (r[col1] || 'Sin dato') === c1 && 
+                    (r[col2] || 'Sin dato') === c2
+                ).length;
+            });
+        });
+
+        return resultado;
+    }
+
+    function cruzarVariablesInfraestructura() {
+        const resultado = {};
+        const establecimientos = [...new Set(datosGlobales.map(r => r['Establecimiento']))];
+
+        establecimientos.forEach(est => {
+            const registros = datosGlobales.filter(r => r['Establecimiento'] === est);
+            if (registros.length > 0) {
+                const limpiezas = registros.map(r => convertirSatisfaccion(r['LIMPIEZA E HIGIENE DEL SERVICIO']));
+                const valoraciones = registros.map(r => convertirSatisfaccion(r['VALORACIÓN VISUAL FÍSICA HOSPITAL']));
+                const seguridades = registros.map(r => convertirSatisfaccion(r['SEGURIDAD DENTRO DEL HOSPITAL']));
+
+                resultado[est] = {
+                    limpieza: (limpiezas.reduce((a,b) => a+b, 0) / limpiezas.length * 100).toFixed(1),
+                    valoracion: (valoraciones.reduce((a,b) => a+b, 0) / valoraciones.length * 100).toFixed(1),
+                    seguridad: (seguridades.reduce((a,b) => a+b, 0) / seguridades.length * 100).toFixed(1)
+                };
+            }
+        });
+
+        return resultado;
+    }
+
+    function convertirSatisfaccion(valor) {
+        const satisfaccionMap = {
+            'Muy Buena': 1, 'Muy buena': 1, 'Buena': 0.8, 'Media': 0.6, 'Mala': 0.2, 'Muy mala': 0, 'Muy Mala': 0,
+            'Muy conforme': 1, 'Conforme': 0.8, 'Medianamente': 0.6, 'Disconforme': 0.2, 'Muy disconforme': 0,
+            'No sabe/No contesta': 0.5, 'No sabe/no contesta': 0.5
+        };
+        return satisfaccionMap[valor] || 0.5;
+    }
+
+    function convertirDisponibilidad(valor) {
+        const disponibilidadMap = {
+            'Todos': 1, 'Casi todos': 0.8, 'Algunos': 0.5, 'Pocos': 0.2, 'Ninguno': 0, 'No sabe/No contesta': 0.5
+        };
+        return disponibilidadMap[valor] || 0.5;
+    }
+
+    function calcularSatisfaccion(registro) {
+        const valores = [
+            convertirSatisfaccion(registro['CORDIALIDAD DEL PERSONAL ADMINISTRATIVO']),
+            convertirSatisfaccion(registro['CORDIALIDAD DEL PERSONAL de enfermería']),
+            convertirSatisfaccion(registro['CORDIALIDAD DEL PERSONAL MÉDICO']),
+            convertirSatisfaccion(registro['TIEMPO DE CONSULTA'])
+        ];
+        const promedio = (valores.reduce((a,b) => a+b, 0) / valores.length * 100).toFixed(0);
+        
+        if (promedio >= 80) return `<span class="badge success">${promedio}%</span>`;
+        if (promedio >= 60) return `<span class="badge primary">${promedio}%</span>`;
+ if (promedio >= 40) return `<span class="badge warning">${promedio}%</span>`;
+        return `<span class="badge danger">${promedio}%</span>`;
+    }
+
+    // GRÁFICOS
+    function crearGrafico(id, labels, datos, tipo, titulo) {
+        const ctx = document.getElementById(id);
+        if (!ctx) return;
+
+        if (chartsInstances[id]) chartsInstances[id].destroy();
+
+        const colores = generarColores(labels.length);
+
+        chartsInstances[id] = new Chart(ctx, {
+            type: tipo,
+            data: {
+                labels: labels,
+                datasets: [{
+                    label: titulo,
+                    data: datos,
+                    backgroundColor: colores,
+                    borderColor: colores.map(c => c.replace('0.5', '1')),
+                    borderWidth: 2,
+                    tension: 0.4
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: {
+                    legend: { position: 'bottom' },
+                    tooltip: { backgroundColor: '#333', padding: 12, titleFont: { size: 14 }, bodyFont: { size: 13 } }
+                },
+                scales: tipo !== 'pie' && tipo !== 'doughnut' ? {
+                    y: { beginAtZero: true, grid: { color: 'rgba(0,0,0,0.05)' } },
+                    x: { grid: { display: false } }
+                } : {}
+            }
+        });
+    }
+
+    function crearGraficoCruce(id, datos, tipo, titulo) {
+        const ctx = document.getElementById(id);
+        if (!ctx) return;
+
+        if (chartsInstances[id]) chartsInstances[id].destroy();
+
+        const labels = Object.keys(datos);
+        const valores = Object.values(datos);
+        const colores = generarColores(labels.length);
+
+        chartsInstances[id] = new Chart(ctx, {
+            type: tipo,
+            data: {
+                labels: labels,
+                datasets: [{
+                    label: 'Satisfacción %',
+                    data: valores,
+                    backgroundColor: colores,
+                    borderColor: colores.map(c => c.replace('0.5', '1')),
+                    borderWidth: 2
+                }]
+            },
+            options: {
+                indexAxis: 'y',
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: {
+                    legend: { display: false },
+                    tooltip: { backgroundColor: '#333', padding: 12 }
+                },
+                scales: {
+                    x: { beginAtZero: true, max: 100, grid: { color: 'rgba(0,0,0,0.05)' } },
+                    y: { grid: { display: false } }
+                }
+            }
+        });
+    }
+
+    function crearGraficoCruceMatriz(id, datos, titulo) {
+        const ctx = document.getElementById(id);
+        if (!ctx) return;
+
+        if (chartsInstances[id]) chartsInstances[id].destroy();
+
+        const labels = Object.keys(datos).map(k => k.split('|')[0]);
+        const labelsCat2 = Object.keys(datos).map(k => k.split('|')[1]);
+        const uniqueLabels = [...new Set(labels)];
+        const uniqueLabelsCat2 = [...new Set(labelsCat2)];
+
+        const datasets = uniqueLabelsCat2.map((cat, idx) => {
+            const values = uniqueLabels.map(label => {
+                const key = `${label}|${cat}`;
+                return datos[key] || 0;
+            });
+            return {
+                label: cat,
+                data: values,
+                backgroundColor: `hsla(${idx * 30}, 80%, 55%, 0.7)`,
+                borderColor: `hsla(${idx * 30}, 80%, 55%, 1)`,
+                borderWidth: 1
+            };
+        });
+
+        chartsInstances[id] = new Chart(ctx, {
+            type: 'bar',
+            data: {
+                labels: uniqueLabels,
+                datasets: datasets
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: {
+                    legend: { position: 'bottom' },
+ tooltip: { backgroundColor: '#333', padding: 12 }
+                },
+                scales: {
+                    y: { beginAtZero: true, grid: { color: 'rgba(0,0,0,0.05)' } },
+                    x: { grid: { display: false } }
+                }
+            }
+        });
+    }
+
+    function crearGraficoInfraestructura(id, datos, titulo) {
+        const ctx = document.getElementById(id);
+        if (!ctx) return;
+
+        if (chartsInstances[id]) chartsInstances[id].destroy();
+
+        const labels = Object.keys(datos);
+        const limpiezas = Object.values(datos).map(d => parseFloat(d.limpieza));
+        const valoraciones = Object.values(datos).map(d => parseFloat(d.valoracion));
+        const seguridades = Object.values(datos).map(d => parseFloat(d.seguridad));
+
+        chartsInstances[id] = new Chart(ctx, {
+            type: 'radar',
+            data: {
+                labels: labels,
+                datasets: [
+                    {
+                        label: 'Limpieza',
+                        data: limpiezas,
+                        borderColor: '#10b981',
+                        backgroundColor: 'rgba(16, 185, 129, 0.1)',
+                        borderWidth: 2
+                    },
+                    {
+                        label: 'Valoración Física',
+                        data: valoraciones,
+                        borderColor: '#f59e0b',
+                        backgroundColor: 'rgba(245, 158, 11, 0.1)',
+                        borderWidth: 2
+                    },
+                    {
+                        label: 'Seguridad',
+                        data: seguridades,
+                        borderColor: '#3b82f6',
+                        backgroundColor: 'rgba(59, 130, 246, 0.1)',
+                        borderWidth: 2
+                    }
+                ]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: {
+                    legend: { position: 'bottom' },
+                    tooltip: { backgroundColor: '#333', padding: 12 }
+                },
+                scales: {
+                    r: { beginAtZero: true, max: 100, ticks: { stepSize: 20 } }
+                }
+            }
+        });
+    }
+
+    // TABLAS
+    function llenarTabla(idTabla, datos) {
+        const tbody = document.querySelector(`#${idTabla} tbody`);
+        tbody.innerHTML = '';
+        const total = Object.values(datos).reduce((a,b) => a+b, 0);
+
+        Object.entries(datos).sort((a, b) => b[1] - a[1]).forEach(([cat, count]) => {
+            const row = tbody.insertRow();
+            row.innerHTML = `
+                <td><strong>${cat}</strong></td>
+                <td>${count}</td>
+                <td>${((count/total)*100).toFixed(1)}%</td>
+            `;
+        });
+    }
+
+    function llenarTablaCruce(idTabla, datos) {
+        const tbody = document.querySelector(`#${idTabla} tbody`);
+        tbody.innerHTML = '';
+
+        Object.entries(datos).sort((a, b) => parseFloat(b[1]) - parseFloat(a[1])).forEach(([est, satisfaccion]) => {
+            const registros = datosGlobales.filter(r => r['Establecimiento'] === est).length;
+            const row = tbody.insertRow();
+            row.innerHTML = `
+                <td><strong>${est}</strong></td>
+                <td><span class="badge success">${satisfaccion}%</span></td>
+                <td>${registros}</td>
+            `;
+        });
+    }
+
+    function llenarTablaCruceEspec(idTabla, datos) {
+        const tbody = document.querySelector(`#${idTabla} tbody`);
+        tbody.innerHTML = '';
+
+        Object.entries(datos).sort((a, b) => parseFloat(b[1]) - parseFloat(a[1])).forEach(([esp, cordialidad]) => {
+            const registros = datosGlobales.filter(r => r['Especialidades del Servicio'] === esp).length;
+            const row = tbody.insertRow();
+            row.innerHTML = `
+                <td><strong>${esp}</strong></td>
+                <td><span class="badge success">${cordialidad}%</span></td>
+                <td>${registros}</td>
+            `;
+ });
+    }
+
+    function llenarTablaCruceMatriz(idTabla, datos) {
+        const tbody = document.querySelector(`#${idTabla} tbody`);
+        tbody.innerHTML = '';
+        const labels = [...new Set(Object.keys(datos).map(k => k.split('|')[0]))];
+
+        labels.forEach(label => {
+            const si = datos[`SI|${label}`] || 0;
+            const no = datos[`NO|${label}`] || 0;
+            const row = tbody.insertRow();
+            row.innerHTML = `
+                <td><strong>${label}</strong></td>
+                <td>${si}</td>
+                <td>${no}</td>
+            `;
+        });
+    }
+
+    function llenarTablaCruceMatrizGeneral(idTabla, datos) {
+        const tbody = document.querySelector(`#${idTabla} tbody`);
+        tbody.innerHTML = '';
+        const labels = [...new Set(Object.keys(datos).map(k => k.split('|')[0]))];
+
+        labels.forEach(label => {
+            const buena = datos[`${label}|Buena`] || 0;
+            const media = datos[`${label}|Media`] || 0;
+            const mala = datos[`${label}|Mala`] || 0;
+            const row = tbody.insertRow();
+            row.innerHTML = `
+                <td><strong>${label}</strong></td>
+                <td>${buena}</td>
+                <td>${media}</td>
+            `;
+        });
+    }
+
+    function llenarTablaInfraestructura(idTabla, datos) {
+        const tbody = document.querySelector(`#${idTabla} tbody`);
+        tbody.innerHTML = '';
+
+        Object.entries(datos).forEach(([est, infra]) => {
+            const row = tbody.insertRow();
+            row.innerHTML = `
+                <td><strong>${est}</strong></td>
+                <td><span class="badge success">${infra.limpieza}%</span></td>
+                <td><span class="badge primary">${infra.valoracion}%</span></td>
+                <td><span class="badge warning">${infra.seguridad}%</span></td>
+            `;
+        });
+    }
+
+    // UTILIDADES
+    function generarColores(cantidad) {
+        const colores = [
+            'rgba(59, 130, 246, 0.7)',
+            'rgba(220, 38, 38, 0.7)',
+            'rgba(16, 185, 129, 0.7)',
+            'rgba(245, 158, 11, 0.7)',
+            'rgba(139, 92, 246, 0.7)',
+            'rgba(20, 184, 184, 0.7)',
+            'rgba(236, 72, 153, 0.7)',
+            'rgba(251, 146, 60, 0.7)'
+        ];
+
+        if (cantidad <= colores.length) return colores.slice(0, cantidad);
+
+        const result = [...colores];
+        for (let i = colores.length; i < cantidad; i++) {
+            const hue = (i * 137.5) % 360;
+            result.push(`hsla(${hue}, 70%, 55%, 0.7)`);
+        }
+        return result;
+    }
+
+    function mostrarMensaje(texto, tipo) {
+        const msgDiv = document.getElementById('message');
+        msgDiv.innerHTML = `<div class="${tipo}-message">${texto}</div>`;
+        setTimeout(() => { msgDiv.innerHTML = ''; }, 5000);
+    }
+
+    function switchTab(e, tabName) {
+        document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+        document.querySelectorAll('.tab-content').forEach(tc => tc.classList.remove('active'));
+
+        e.target.classList.add('active');
+        document.getElementById(tabName).classList.add('active');
+    }
+
+    function filtrarTabla() {
+        const search = document.getElementById('searchInput').value.toLowerCase();
+        const filtroEst = document.getElementById('filterEstablecimiento').value;
+        const filtroEsp = document.getElementById('filterEspecialidad').value;
+
+        document.querySelectorAll('#datosCompletos tbody tr').forEach(row => {
+            const nombre = row.cells[2].textContent.toLowerCase();
+            const cedula = row.cells[1].textContent.toLowerCase();
+            const est = row.cells[4].textContent;
+            const esp = row.cells[5].textContent;
+
+            const matchSearch = nombre.includes(search) || cedula.includes(search);
+            const matchEst = !filtroEst || est === filtroEst;
+            const matchEsp = !filtroEsp || esp === filtroEsp;
+
+            row.style.display = matchSearch && matchEst && matchEsp ? '' : 'none';
+        });
+    }
+ function exportarCSV() {
+        let csv = 'ID,Cédula,Nombre,Edad,Establecimiento,Especialidad,Crónico,Discapacidad,Indígena\n';
+        datosGlobales.forEach(r => {
+            csv += `${r.ID},"${r.Cédula}","${r.Nombre}",${r.EDAD},"${r.Establecimiento}","${r['Especialidades del Servicio']}",${r['ENFERMEDAD CRÓNICA']},${r.DISCAPACIDAD},${r['PERTENECE A PUEBLO INDÍGENA']}\n`;
+        });
+
+        const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
+        const link = document.createElement('a');
+        link.href = URL.createObjectURL(blob);
+        link.download = `datos_salud_${new Date().toISOString().split('T')[0]}.csv`;
+        link.click();
+    }
+
+    function toggleAutoRefresh() {
+        const btn = document.getElementById('autoRefreshBtn');
+        if (autoRefreshInterval) {
+            clearInterval(autoRefreshInterval);
+            autoRefreshInterval = null;
+            btn.textContent = '⏱️ Auto-refresh OFF';
+        } else {
+            autoRefreshInterval = setInterval(cargarDatos, 30000);
+            btn.textContent = '⏱️ Auto-refresh ON (30s)';
+        }
+    }
+
+    // INICIALIZAR
+    document.addEventListener('DOMContentLoaded', cargarDatos);
+</script>
+
+</body>
+</html>
