@@ -828,49 +828,7 @@
         </div>
     </div>
 
-    <!-- TABLA DE DATOS COMPLETA -->
-    <div class="section">
-        <h2 class="section-title">📋 Tabla de Datos Completa</h2>
-        <div class="filter-panel">
-            <div class="filter-group">
-                <label>Buscar:</label>
-                <input type="text" id="searchInput" placeholder="Buscar por nombre, cédula o establecimiento..." onkeyup="filtrarTabla()">
-            </div>
-            <div class="filter-group">
-                <label>Filtrar por establecimiento:</label>
-                <select id="filterEstablecimiento" onchange="filtrarTabla()">
-                    <option value="">Todos</option>
-                </select>
-            </div>
-            <div class="filter-group">
-                <label>Filtrar por especialidad:</label>
-                <select id="filterEspecialidad" onchange="filtrarTabla()">
-                    <option value="">Todos</option>
-                </select>
-            </div>
-        </div>
-        <div class="table-container">
-            <table id="datosCompletos">
-                <thead>
-                    <tr>
-                        <th>ID</th>
-                        <th>Cédula</th>
-                        <th>Nombre</th>
-                        <th>Edad</th>
-                        <th>Establecimiento</th>
-                        <th>Especialidad</th>
-                        <th>Crónico</th>
-                        <th>Discapacidad</th>
-                        <th>Indígena</th>
-                        <th>Tiempo Espera</th>
-                        <th>Satisfacción General</th>
-                    </tr>
-                </thead>
-                <tbody></tbody>
-            </table>
-        </div>
-    </div>
-
+    
  
 
 <script>
@@ -934,7 +892,16 @@
         document.getElementById('indigenas').textContent = indigenas;
         document.getElementById('indigenasPct').textContent = `${((indigenas/total)*100).toFixed(1)}%`;
     }
-
+ // INDICADORES AVANZADOS
+    function actualizarIndicadoresAvanzados() {
+        // Índice General de Satisfacción
+        const satisfacciones = datosGlobales.map(r => {
+            const cordAdmin = convertirSatisfaccion(r['CORDIALIDAD DEL PERSONAL ADMINISTRATIVO']);
+            const cordEnf = convertirSatisfaccion(r['CORDIALIDAD DEL PERSONAL de enfermería']);
+            const cordMed = convertirSatisfaccion(r['CORDIALIDAD DEL PERSONAL MÉDICO']);
+            const tiempoConsulta = convertirSatisfaccion(r['TIEMPO DE CONSULTA']);
+            return (cordAdmin + cordEnf + cordMed + tiempoConsulta) / 4;
+        });
     // ANÁLISIS UNIVARIADO
     function actualizarAnalisisUnivariado() {
         // Establecimientos
@@ -1102,16 +1069,7 @@ filterEsp.innerHTML = '<option value="">Todos</option>';
         });
     }
 
-    // INDICADORES AVANZADOS
-    function actualizarIndicadoresAvanzados() {
-        // Índice General de Satisfacción
-        const satisfacciones = datosGlobales.map(r => {
-            const cordAdmin = convertirSatisfaccion(r['CORDIALIDAD DEL PERSONAL ADMINISTRATIVO']);
-            const cordEnf = convertirSatisfaccion(r['CORDIALIDAD DEL PERSONAL de enfermería']);
-            const cordMed = convertirSatisfaccion(r['CORDIALIDAD DEL PERSONAL MÉDICO']);
-            const tiempoConsulta = convertirSatisfaccion(r['TIEMPO DE CONSULTA']);
-            return (cordAdmin + cordEnf + cordMed + tiempoConsulta) / 4;
-        });
+   
         const indiceGeneral = (satisfacciones.reduce((a,b) => a+b, 0) / satisfacciones.length * 100).toFixed(1);
         document.getElementById('indiceGeneral').textContent = indiceGeneral + '%';
 
