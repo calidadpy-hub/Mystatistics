@@ -2,7 +2,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Dashboard de Calidad en Servicios de Salud - DIRECCIÓN DE CALIDAD- DIRECCIÓN GENERAL DE GABINETE</title>
+    <title>Dashboard de Calidad en Servicios de Salud</title>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/3.9.1/chart.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/PapaParse/5.4.1/papaparse.min.js"></script>
     <style>
@@ -979,39 +979,74 @@
         llenarTabla('tableEspecialidad', especialidades);
 
         // Satisfacción
-        // Tiempo de Espera — torta con 3 categorías agrupadas
+        // Gráfico 1: Tiempo de Espera — torta con 3 categorías agrupadas
         (function() {
-            const rawTE = contarCategorias('tiempo de espera:');
-            const agrupado = { 'Muy Larga Espera': 0, 'Media': 0, 'Poca Espera': 0 };
-            Object.entries(rawTE).forEach(function([cat, cnt]) {
-                const c = String(cat).trim();
-                if (c === 'Muy larga espera' || c === 'Larga espera' || c === 'Muy Larga espera' || c === 'Larga Espera') {
-                    agrupado['Muy Larga Espera'] += cnt;
-                } else if (c === 'Media') {
-                    agrupado['Media'] += cnt;
-                } else if (c === 'Muy poca espera' || c === 'Poca espera' || c === 'Muy Poca espera' || c === 'Poca Espera') {
-                    agrupado['Poca Espera'] += cnt;
-                } else {
-                    // cualquier otro valor no nulo va a Media como neutro
-                    if (cnt > 0) agrupado['Media'] += cnt;
+            const rawEspera = contarCategorias('tiempo de espera:');
+            const gruposEspera = { 'Muy Larga Espera': 0, 'Media': 0, 'Poca Espera': 0 };
+            const mapEspera = {
+                'Muy larga espera': 'Muy Larga Espera',
+                'Larga espera': 'Muy Larga Espera',
+                'Media': 'Media',
+                'Mediana': 'Media',
+                'Poca espera': 'Poca Espera',
+                'Muy poca espera': 'Poca Espera'
+            };
+            Object.entries(rawEspera).forEach(([cat, count]) => {
+                // Búsqueda flexible (case-insensitive, trim)
+                const catNorm = cat.trim();
+                let grupo = null;
+                for (const [key, val] of Object.entries(mapEspera)) {
+                    if (catNorm.toLowerCase() === key.toLowerCase()) { grupo = val; break; }
                 }
+                if (!grupo) {
+                    const lower = catNorm.toLowerCase();
+                    if (lower.includes('muy larga') || lower.includes('larga')) grupo = 'Muy Larga Espera';
+                    else if (lower.includes('media') || lower.includes('mediana')) grupo = 'Media';
+                    else if (lower.includes('poca') || lower.includes('muy poca')) grupo = 'Poca Espera';
+                }
+                if (grupo) gruposEspera[grupo] += count;
             });
-            const labelsTE = Object.keys(agrupado).filter(function(k){ return agrupado[k] > 0; });
-            const valsTE   = labelsTE.map(function(k){ return agrupado[k]; });
-            crearGraficoPastelPastel('chartTiempoEspera', labelsTE, valsTE, 'Tiempo de Espera');
+            const filtrados = Object.fromEntries(Object.entries(gruposEspera).filter(([,v]) => v > 0));
+            const labelsE = Object.keys(filtrados);
+            const dataE = Object.values(filtrados);
+            crearGraficoPasteles('chartTiempoEspera', labelsE, dataE, 'Tiempo de Espera');
         })();
 
         const cordialidad1 = contarCategorias('CORDIALIDAD DEL PERSONAL ADMINISTRATIVO');
         crearGrafico('chartCordialidadAdmin', Object.keys(cordialidad1), Object.values(cordialidad1), 'bar', 'Cordialidad Personal Admin');
 
-        const cordialidad2 = contarCategorias('CORDIALIDAD DEL PERSONAL de enfermería');
-        crearGraficoPastelPastel('chartCordialidadEnf', Object.keys(cordialidad2), Object.values(cordialidad2), 'Cordialidad Personal Enfermería');
+        // Gráfico 2: Cordialidad Personal de Enfermería — torta con todas las categorías reales
+        (function() {
+            const rawEnf = contarCategorias('CORDIALIDAD DEL PERSONAL de enfermería');
+            const ordenEnf = ['Muy Buena', 'Buena', 'Media', 'Mala', 'Muy mala', 'No sabe/No contesta'];
+            const labelsEnf = [], dataEnf = [];
+            ordenEnf.forEach(cat => {
+                // Buscar coincidencia flexible
+                for (const [key, val] of Object.entries(rawEnf)) {
+                    if (key.trim().toLowerCase() === cat.toLowerCase()) {
+                        labelsEnf.push(cat); dataEnf.push(val); break;
+                    }
+                }
+            });
+            // Agregar categorías no mapeadas que existan en los datos
+            Object.entries(rawEnf).forEach(([key, val]) => {
+                if (!labelsEnf.some(l => l.toLowerCase() === key.trim().toLowerCase())) {
+                    labelsEnf.push(key.trim()); dataEnf.push(val);
+                }
+            });
+            crearGraficoPasteles('chartCordialidadEnf', labelsEnf, dataEnf, 'Cordialidad Enfermería');
+        })();
 
         const cordialidad3 = contarCategorias('CORDIALIDAD DEL PERSONAL MÉDICO');
         crearGrafico('chartCordialidadMed', Object.keys(cordialidad3), Object.values(cordialidad3), 'bar', 'Cordialidad Personal Médico');
 
-        const tiempoConsulta = contarCategorias('TIEMPO DE CONSULTA');
-        crearGraficoPastelPastel('chartTiempoConsulta', Object.keys(tiempoConsulta), Object.values(tiempoConsulta), 'Tiempo de Consulta');
+        // Gráfico 3: Tiempo de Consulta — torta con todas las categorías reales
+        (function() {
+            const rawConsulta = contarCategorias('TIEMPO DE CONSULTA');
+            const labelsC = Object.keys(rawConsulta).filter(k => k.trim() !== '');
+            const dataC = labelsC.map(k => rawConsulta[k]);
+            crearGraficoPasteles('chartTiempoConsulta', labelsC, dataC, 'Tiempo de Consulta');
+        })();
 
         const atencFarmacia = contarCategorias('ATENCIÓN DE ENCARGADO DE FARMACIAS');
         crearGrafico('chartAtenciónFarmacia', Object.keys(atencFarmacia), Object.values(atencFarmacia), 'bar', 'Atención Farmacia');
@@ -1268,6 +1303,80 @@ contador[valor] = (contador[valor] || 0) + 1;
     }
 
     // GRÁFICOS
+    // Paleta pastel sin rojos ni azules — para los tres gráficos nuevos tipo torta
+    const PASTEL_PALETTE = [
+        'rgba(134, 200, 158, 0.85)',
+        'rgba(255, 209, 102, 0.85)',
+        'rgba(178, 223, 219, 0.85)',
+        'rgba(255, 179, 128, 0.85)',
+        'rgba(200, 162, 200, 0.85)',
+        'rgba(161, 218, 180, 0.85)',
+        'rgba(255, 236, 153, 0.85)',
+        'rgba(144, 213, 208, 0.85)',
+    ];
+    const PASTEL_BORDERS = [
+        'rgba(80, 160, 110, 1)',
+        'rgba(210, 160, 40, 1)',
+        'rgba(90, 170, 160, 1)',
+        'rgba(210, 120, 60, 1)',
+        'rgba(150, 100, 150, 1)',
+        'rgba(90, 170, 120, 1)',
+        'rgba(200, 180, 80, 1)',
+        'rgba(70, 160, 155, 1)',
+    ];
+
+    function crearGraficoPasteles(id, labels, datos, titulo) {
+        const ctx = document.getElementById(id);
+        if (!ctx) return;
+        if (chartsInstances[id]) chartsInstances[id].destroy();
+
+        const bgColors = labels.map((_, i) => PASTEL_PALETTE[i % PASTEL_PALETTE.length]);
+        const brColors = labels.map((_, i) => PASTEL_BORDERS[i % PASTEL_BORDERS.length]);
+
+        chartsInstances[id] = new Chart(ctx, {
+            type: 'pie',
+            data: {
+                labels: labels,
+                datasets: [{
+                    label: titulo,
+                    data: datos,
+                    backgroundColor: bgColors,
+                    borderColor: brColors,
+                    borderWidth: 2,
+                    hoverOffset: 12
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: {
+                    legend: {
+                        position: 'bottom',
+                        labels: {
+                            padding: 16,
+                            font: { size: 12, weight: '600' },
+                            usePointStyle: true,
+                            pointStyle: 'circle'
+                        }
+                    },
+                    tooltip: {
+                        backgroundColor: 'rgba(40,40,40,0.92)',
+                        padding: 12,
+                        titleFont: { size: 14 },
+                        bodyFont: { size: 13 },
+                        callbacks: {
+                            label: function(context) {
+                                const total = context.dataset.data.reduce((a, b) => a + b, 0);
+                                const pct = total > 0 ? ((context.parsed / total) * 100).toFixed(1) : 0;
+                                return ' ' + context.label + ': ' + context.parsed + ' (' + pct + '%)';
+                            }
+                        }
+                    }
+                }
+            }
+        });
+    }
+
     function crearGrafico(id, labels, datos, tipo, titulo) {
         const ctx = document.getElementById(id);
         if (!ctx) return;
@@ -1591,70 +1700,6 @@ contador[valor] = (contador[valor] || 0) + 1;
             autoRefreshInterval = setInterval(cargarDatos, 30000);
             btn.textContent = '⏱️ Auto-refresh ON (30s)';
         }
-    }
-
-    // ── GRÁFICO TORTA PASTEL (sin rojo ni azul) ──────────────────────────────
-    function crearGraficoPastelPastel(id, labels, datos, titulo) {
-        var ctx = document.getElementById(id);
-        if (!ctx) return;
-        if (chartsInstances[id]) chartsInstances[id].destroy();
-
-        var paletaPastel = [
-            'rgba(134, 205, 172, 0.85)',
-            'rgba(255, 209, 102, 0.85)',
-            'rgba(176, 224, 230, 0.85)',
-            'rgba(221, 160, 221, 0.85)',
-            'rgba(255, 179, 128, 0.85)',
-            'rgba(152, 216, 200, 0.85)',
-            'rgba(245, 200, 150, 0.85)',
-            'rgba(200, 182, 226, 0.85)'
-        ];
-        var borderPastel = paletaPastel.map(function(c){ return c.replace('0.85', '1'); });
-        var coloresBg = labels.map(function(_, i){ return paletaPastel[i % paletaPastel.length]; });
-        var coloresBr = labels.map(function(_, i){ return borderPastel[i % borderPastel.length]; });
-
-        chartsInstances[id] = new Chart(ctx, {
-            type: 'pie',
-            data: {
-                labels: labels,
-                datasets: [{
-                    label: titulo,
-                    data: datos,
-                    backgroundColor: coloresBg,
-                    borderColor: coloresBr,
-                    borderWidth: 2,
-                    hoverOffset: 10
-                }]
-            },
-            options: {
-                responsive: true,
-                maintainAspectRatio: false,
-                plugins: {
-                    legend: {
-                        position: 'bottom',
-                        labels: {
-                            padding: 14,
-                            font: { size: 12 },
-                            usePointStyle: true,
-                            pointStyleWidth: 12
-                        }
-                    },
-                    tooltip: {
-                        backgroundColor: '#2d3748',
-                        padding: 12,
-                        titleFont: { size: 13, weight: 'bold' },
-                        bodyFont: { size: 12 },
-                        callbacks: {
-                            label: function(ctx) {
-                                var total = ctx.dataset.data.reduce(function(a, b){ return a + b; }, 0);
-                                var pct   = total > 0 ? ((ctx.parsed / total) * 100).toFixed(1) : 0;
-                                return ' ' + ctx.label + ': ' + ctx.parsed + ' (' + pct + '%)';
-                            }
-                        }
-                    }
-                }
-            }
-        });
     }
 
     // INICIALIZAR
