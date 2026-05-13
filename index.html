@@ -981,20 +981,27 @@
         // Satisfacción
         // Tiempo de Espera — torta pastel agrupada en 3 categorías
         (function(){
+            // Detectar la columna correcta buscando parcialmente "espera" en el nombre
+            var colEspera = '';
+            if (datosGlobales.length > 0) {
+                Object.keys(datosGlobales[0]).forEach(function(k) {
+                    if (k.toLowerCase().includes('espera')) colEspera = k;
+                });
+            }
+            console.log('[DEBUG Tiempo Espera] columna encontrada:', colEspera);
+            if (!colEspera) { console.warn('No se encontró columna de Tiempo de Espera'); return; }
+
             var grupos = { 'Muy Larga Espera': 0, 'Media': 0, 'Poca Espera': 0 };
             datosGlobales.forEach(function(r) {
-                // Buscar la columna con coincidencia insensible a mayúsculas
-                var val = '';
-                Object.keys(r).forEach(function(k) {
-                    if (k.toLowerCase().trim() === 'tiempo de espera:') val = (r[k] || '').trim();
-                });
-                if (!val) return; // ignorar vacíos — sin "Sin dato"
+                var val = (r[colEspera] || '').trim();
+                if (!val) return;
                 var v = val.toLowerCase();
-                if (v.includes('muy larga') || v.includes('larga')) grupos['Muy Larga Espera']++;
-                else if (v.includes('media') || v.includes('mediana')) grupos['Media']++;
-                else if (v.includes('poca') || v.includes('muy poca') || v.includes('corta')) grupos['Poca Espera']++;
-                else grupos['Media']++; // cualquier valor no reconocido va a Media
+                if (v.includes('muy larga') || (v.includes('larga') && !v.includes('poca'))) grupos['Muy Larga Espera']++;
+                else if (v.includes('media') || v.includes('mediana') || v.includes('moderada')) grupos['Media']++;
+                else if (v.includes('poca') || v.includes('muy poca') || v.includes('corta') || v.includes('breve')) grupos['Poca Espera']++;
+                else { console.log('[DEBUG Espera] valor no clasificado:', val); grupos['Media']++; }
             });
+            console.log('[DEBUG Tiempo Espera] grupos:', JSON.stringify(grupos));
             var labels = Object.keys(grupos).filter(function(k){ return grupos[k] > 0; });
             var datos = labels.map(function(k){ return grupos[k]; });
             crearGraficoPastel('chartTiempoEspera', labels, datos);
@@ -1005,16 +1012,23 @@
 
         // Cordialidad Enfermería — torta pastel con categorías reales, sin 'Sin dato'
         (function(){
+            // Detectar la columna buscando "enferm" en el nombre
+            var colEnf = '';
+            if (datosGlobales.length > 0) {
+                Object.keys(datosGlobales[0]).forEach(function(k) {
+                    if (k.toLowerCase().includes('enferm')) colEnf = k;
+                });
+            }
+            console.log('[DEBUG Cordialidad Enf] columna encontrada:', colEnf);
+            if (!colEnf) { console.warn('No se encontró columna de Cordialidad Enfermería'); return; }
+
             var contador = {};
             datosGlobales.forEach(function(r) {
-                var val = '';
-                Object.keys(r).forEach(function(k) {
-                    if (k.toLowerCase().trim() === 'cordialidad del personal de enfermería' ||
-                        k.toLowerCase().trim() === 'cordialidad del personal de enfermeria') val = (r[k] || '').trim();
-                });
+                var val = (r[colEnf] || '').trim();
                 if (!val) return;
                 contador[val] = (contador[val] || 0) + 1;
             });
+            console.log('[DEBUG Cordialidad Enf] categorías:', JSON.stringify(contador));
             var labels = Object.keys(contador);
             var datos = labels.map(function(k){ return contador[k]; });
             crearGraficoPastel('chartCordialidadEnf', labels, datos);
