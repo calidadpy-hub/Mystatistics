@@ -628,7 +628,7 @@
 
     <!-- DISTRIBUCIONES -->
     <div class="section">
-        <h2 class="section-title">🎯 Análisis Univariado</h2>
+        <h2 class="section-title">🎯 Análisis </h2>
         
         <div class="tabs">
             <button class="tab active" onclick="switchTab(event, 'tab1')">Establecimientos</button>
@@ -966,92 +966,52 @@
         document.getElementById('indigenasPct').textContent = `${((indigenas/total)*100).toFixed(1)}%`;
     }
 
-    // ANÁLISIS UNIVARIADO
+    // ANÁLISIS UNIVARIADO - ACTUALIZADO
     function actualizarAnalisisUnivariado() {
-        // Establecimientos
- const establecimientos = contarCategorias('Establecimiento');
+        // Establecimientos (Se mantiene igual)
+        const establecimientos = contarCategorias('Establecimiento');
         crearGrafico('chartEstablecimiento', Object.keys(establecimientos), Object.values(establecimientos), 'doughnut', 'Distribución por Establecimiento');
         llenarTabla('tableEstablecimiento', establecimientos);
 
-        // Especialidades
+        // Especialidades (Se mantiene igual)
         const especialidades = contarCategorias('Especialidades del Servicio');
         crearGrafico('chartEspecialidad', Object.keys(especialidades), Object.values(especialidades), 'doughnut', 'Distribución por Especialidad');
         llenarTabla('tableEspecialidad', especialidades);
 
-        // Satisfacción
-        // Gráfico 1: Tiempo de Espera — torta con 3 categorías agrupadas
-        (function() {
-            const rawEspera = contarCategorias('tiempo de espera:');
-            const gruposEspera = { 'Muy Larga Espera': 0, 'Media': 0, 'Poca Espera': 0 };
-            const mapEspera = {
-                'Muy larga espera': 'Muy Larga Espera',
-                'Larga espera': 'Muy Larga Espera',
-                'Media': 'Media',
-                'Mediana': 'Media',
-                'Poca espera': 'Poca Espera',
-                'Muy poca espera': 'Poca Espera'
-            };
-            Object.entries(rawEspera).forEach(([cat, count]) => {
-                // Búsqueda flexible (case-insensitive, trim)
-                const catNorm = cat.trim();
-                let grupo = null;
-                for (const [key, val] of Object.entries(mapEspera)) {
-                    if (catNorm.toLowerCase() === key.toLowerCase()) { grupo = val; break; }
-                }
-                if (!grupo) {
-                    const lower = catNorm.toLowerCase();
-                    if (lower.includes('muy larga') || lower.includes('larga')) grupo = 'Muy Larga Espera';
-                    else if (lower.includes('media') || lower.includes('mediana')) grupo = 'Media';
-                    else if (lower.includes('poca') || lower.includes('muy poca')) grupo = 'Poca Espera';
-                }
-                if (grupo) gruposEspera[grupo] += count;
-            });
-            const filtrados = Object.fromEntries(Object.entries(gruposEspera).filter(([,v]) => v > 0));
-            const labelsE = Object.keys(filtrados);
-            const dataE = Object.values(filtrados);
-            crearGraficoPasteles('chartTiempoEspera', labelsE, dataE, 'Tiempo de Espera');
-        })();
+        // --- GRÁFICO 1: TIEMPO DE ESPERA (CORREGIDO) ---
+        const rawEsperas = contarCategorias('tiempo de espera:');
+        const groupedEsperas = {
+            'Muy larga espera': (rawEsperas['Muy larga espera'] || 0) + (rawEsperas['Larga espera'] || 0),
+            'Media': rawEsperas['Media'] || 0,
+            'Poca Espera': (rawEsperas['Muy poca espera'] || 0) + (rawEsperas['Poca espera'] || 0)
+        };
+        // Eliminar categorías vacías o "Sin dato" si existieran
+        delete groupedEsperas['Sin dato']; 
+        crearGrafico('chartTiempoEspera', Object.keys(groupedEsperas), Object.values(groupedEsperas), 'pie', 'Tiempo de Espera');
 
+        // Cordialidad Admin (Se mantiene igual)
         const cordialidad1 = contarCategorias('CORDIALIDAD DEL PERSONAL ADMINISTRATIVO');
         crearGrafico('chartCordialidadAdmin', Object.keys(cordialidad1), Object.values(cordialidad1), 'bar', 'Cordialidad Personal Admin');
 
-        // Gráfico 2: Cordialidad Personal de Enfermería — torta con todas las categorías reales
-        (function() {
-            const rawEnf = contarCategorias('CORDIALIDAD DEL PERSONAL de enfermería');
-            const ordenEnf = ['Muy Buena', 'Buena', 'Media', 'Mala', 'Muy mala', 'No sabe/No contesta'];
-            const labelsEnf = [], dataEnf = [];
-            ordenEnf.forEach(cat => {
-                // Buscar coincidencia flexible
-                for (const [key, val] of Object.entries(rawEnf)) {
-                    if (key.trim().toLowerCase() === cat.toLowerCase()) {
-                        labelsEnf.push(cat); dataEnf.push(val); break;
-                    }
-                }
-            });
-            // Agregar categorías no mapeadas que existan en los datos
-            Object.entries(rawEnf).forEach(([key, val]) => {
-                if (!labelsEnf.some(l => l.toLowerCase() === key.trim().toLowerCase())) {
-                    labelsEnf.push(key.trim()); dataEnf.push(val);
-                }
-            });
-            crearGraficoPasteles('chartCordialidadEnf', labelsEnf, dataEnf, 'Cordialidad Enfermería');
-        })();
+        // --- GRÁFICO 2: CORDIALIDAD ENFERMERÍA (CORREGIDO A TORTA) ---
+        const cordialidad2 = contarCategorias('CORDIALIDAD DEL PERSONAL de enfermería');
+        delete cordialidad2['Sin dato'];
+        crearGrafico('chartCordialidadEnf', Object.keys(cordialidad2), Object.values(cordialidad2), 'pie', 'Cordialidad Personal Enfermería');
 
+        // Cordialidad Médica (Se mantiene igual)
         const cordialidad3 = contarCategorias('CORDIALIDAD DEL PERSONAL MÉDICO');
         crearGrafico('chartCordialidadMed', Object.keys(cordialidad3), Object.values(cordialidad3), 'bar', 'Cordialidad Personal Médico');
 
-        // Gráfico 3: Tiempo de Consulta — torta con todas las categorías reales
-        (function() {
-            const rawConsulta = contarCategorias('TIEMPO DE CONSULTA');
-            const labelsC = Object.keys(rawConsulta).filter(k => k.trim() !== '');
-            const dataC = labelsC.map(k => rawConsulta[k]);
-            crearGraficoPasteles('chartTiempoConsulta', labelsC, dataC, 'Tiempo de Consulta');
-        })();
+        // --- GRÁFICO 3: TIEMPO DE LA CONSULTA (CORREGIDO A TORTA) ---
+        // Se usa la variable exacta: TIEMPO DE LA CONSULTA
+        const tiempoConsulta = contarCategorias('TIEMPO DE LA CONSULTA');
+        delete tiempoConsulta['Sin dato'];
+        crearGrafico('chartTiempoConsulta', Object.keys(tiempoConsulta), Object.values(tiempoConsulta), 'pie', 'Tiempo de Consulta');
 
+        // El resto de los gráficos univariados se mantienen sin cambios
         const atencFarmacia = contarCategorias('ATENCIÓN DE ENCARGADO DE FARMACIAS');
         crearGrafico('chartAtenciónFarmacia', Object.keys(atencFarmacia), Object.values(atencFarmacia), 'bar', 'Atención Farmacia');
 
-        // Tiempos
         const ultimaConsulta = contarCategorias('ÚLTIMA CONSULTA REALIZADA POR');
         crearGrafico('chartUltimaConsulta', Object.keys(ultimaConsulta), Object.values(ultimaConsulta), 'pie', 'Tipo de Consulta');
 
@@ -1064,7 +1024,6 @@
         const cordialidadEstudios = contarCategorias('CORDIALIDAD DEL ENCARGADO DE ESTUDIOS MÉDICOS');
         crearGrafico('chartCordialidadEstudios', Object.keys(cordialidadEstudios), Object.values(cordialidadEstudios), 'bar', 'Cordialidad Estudios');
 
-        // Infraestructura
         const valoracion = contarCategorias('VALORACIÓN VISUAL FÍSICA HOSPITAL');
         crearGrafico('chartValoracionFisica', Object.keys(valoracion), Object.values(valoracion), 'doughnut', 'Valoración Física');
 
@@ -1077,7 +1036,7 @@
         const seguridad = contarCategorias('SEGURIDAD DENTRO DEL HOSPITAL');
         crearGrafico('chartSeguridad', Object.keys(seguridad), Object.values(seguridad), 'doughnut', 'Seguridad');
     }
-
+    
     // CRUCES DE VARIABLES
     function actualizarCrucesVariables() {
         // 1. Establecimiento × Satisfacción General
