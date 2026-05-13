@@ -1039,15 +1039,29 @@
 
         // Tiempo de Consulta — torta pastel con categorías reales, sin 'Sin dato'
         (function(){
+            var colConsulta = '';
+            if (datosGlobales.length > 0) {
+                Object.keys(datosGlobales[0]).forEach(function(k) {
+                    if (k.toLowerCase().includes('consulta') && k.toLowerCase().includes('tiempo')) colConsulta = k;
+                });
+                // Si no encontró con los dos criterios, buscar solo por 'consulta' excluyendo 'última'
+                if (!colConsulta) {
+                    Object.keys(datosGlobales[0]).forEach(function(k) {
+                        var kl = k.toLowerCase();
+                        if (kl.includes('consulta') && !kl.includes('ltima') && !kl.includes('ltimo') && !kl.includes('realizada')) colConsulta = k;
+                    });
+                }
+            }
+            console.log('[DEBUG Tiempo Consulta] columna encontrada:', colConsulta);
+            if (!colConsulta) { console.warn('No se encontró columna de Tiempo de Consulta'); return; }
+
             var contador = {};
             datosGlobales.forEach(function(r) {
-                var val = '';
-                Object.keys(r).forEach(function(k) {
-                    if (k.toLowerCase().trim() === 'tiempo de consulta') val = (r[k] || '').trim();
-                });
+                var val = (r[colConsulta] || '').trim();
                 if (!val) return;
                 contador[val] = (contador[val] || 0) + 1;
             });
+            console.log('[DEBUG Tiempo Consulta] categorías:', JSON.stringify(contador));
             var labels = Object.keys(contador);
             var datos = labels.map(function(k){ return contador[k]; });
             crearGraficoPastel('chartTiempoConsulta', labels, datos);
