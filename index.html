@@ -628,7 +628,7 @@
 
     <!-- DISTRIBUCIONES -->
     <div class="section">
-        <h2 class="section-title">🎯 Análisis </h2>
+        <h2 class="section-title">🎯 Análisis Univariado</h2>
         
         <div class="tabs">
             <button class="tab active" onclick="switchTab(event, 'tab1')">Establecimientos</button>
@@ -966,52 +966,83 @@
         document.getElementById('indigenasPct').textContent = `${((indigenas/total)*100).toFixed(1)}%`;
     }
 
-    // ANÁLISIS UNIVARIADO - ACTUALIZADO
+    // ANÁLISIS UNIVARIADO
     function actualizarAnalisisUnivariado() {
-        // Establecimientos (Se mantiene igual)
-        const establecimientos = contarCategorias('Establecimiento');
+        // Establecimientos
+ const establecimientos = contarCategorias('Establecimiento');
         crearGrafico('chartEstablecimiento', Object.keys(establecimientos), Object.values(establecimientos), 'doughnut', 'Distribución por Establecimiento');
         llenarTabla('tableEstablecimiento', establecimientos);
 
-        // Especialidades (Se mantiene igual)
+        // Especialidades
         const especialidades = contarCategorias('Especialidades del Servicio');
         crearGrafico('chartEspecialidad', Object.keys(especialidades), Object.values(especialidades), 'doughnut', 'Distribución por Especialidad');
         llenarTabla('tableEspecialidad', especialidades);
 
-        // --- GRÁFICO 1: TIEMPO DE ESPERA (CORREGIDO) ---
-        const rawEsperas = contarCategorias('tiempo de espera:');
-        const groupedEsperas = {
-            'Muy larga espera': (rawEsperas['Muy larga espera'] || 0) + (rawEsperas['Larga espera'] || 0),
-            'Media': rawEsperas['Media'] || 0,
-            'Poca Espera': (rawEsperas['Muy poca espera'] || 0) + (rawEsperas['Poca espera'] || 0)
-        };
-        // Eliminar categorías vacías o "Sin dato" si existieran
-        delete groupedEsperas['Sin dato']; 
-        crearGrafico('chartTiempoEspera', Object.keys(groupedEsperas), Object.values(groupedEsperas), 'pie', 'Tiempo de Espera');
+        // Satisfacción
+        // Tiempo de Espera — torta pastel agrupada en 3 categorías
+        (function(){
+            var grupos = { 'Muy Larga Espera': 0, 'Media': 0, 'Poca Espera': 0 };
+            datosGlobales.forEach(function(r) {
+                // Buscar la columna con coincidencia insensible a mayúsculas
+                var val = '';
+                Object.keys(r).forEach(function(k) {
+                    if (k.toLowerCase().trim() === 'tiempo de espera:') val = (r[k] || '').trim();
+                });
+                if (!val) return; // ignorar vacíos — sin "Sin dato"
+                var v = val.toLowerCase();
+                if (v.includes('muy larga') || v.includes('larga')) grupos['Muy Larga Espera']++;
+                else if (v.includes('media') || v.includes('mediana')) grupos['Media']++;
+                else if (v.includes('poca') || v.includes('muy poca') || v.includes('corta')) grupos['Poca Espera']++;
+                else grupos['Media']++; // cualquier valor no reconocido va a Media
+            });
+            var labels = Object.keys(grupos).filter(function(k){ return grupos[k] > 0; });
+            var datos = labels.map(function(k){ return grupos[k]; });
+            crearGraficoPastel('chartTiempoEspera', labels, datos);
+        })();
 
-        // Cordialidad Admin (Se mantiene igual)
         const cordialidad1 = contarCategorias('CORDIALIDAD DEL PERSONAL ADMINISTRATIVO');
         crearGrafico('chartCordialidadAdmin', Object.keys(cordialidad1), Object.values(cordialidad1), 'bar', 'Cordialidad Personal Admin');
 
-        // --- GRÁFICO 2: CORDIALIDAD ENFERMERÍA (CORREGIDO A TORTA) ---
-        const cordialidad2 = contarCategorias('CORDIALIDAD DEL PERSONAL de enfermería');
-        delete cordialidad2['Sin dato'];
-        crearGrafico('chartCordialidadEnf', Object.keys(cordialidad2), Object.values(cordialidad2), 'pie', 'Cordialidad Personal Enfermería');
+        // Cordialidad Enfermería — torta pastel con categorías reales, sin 'Sin dato'
+        (function(){
+            var contador = {};
+            datosGlobales.forEach(function(r) {
+                var val = '';
+                Object.keys(r).forEach(function(k) {
+                    if (k.toLowerCase().trim() === 'cordialidad del personal de enfermería' ||
+                        k.toLowerCase().trim() === 'cordialidad del personal de enfermeria') val = (r[k] || '').trim();
+                });
+                if (!val) return;
+                contador[val] = (contador[val] || 0) + 1;
+            });
+            var labels = Object.keys(contador);
+            var datos = labels.map(function(k){ return contador[k]; });
+            crearGraficoPastel('chartCordialidadEnf', labels, datos);
+        })();
 
-        // Cordialidad Médica (Se mantiene igual)
         const cordialidad3 = contarCategorias('CORDIALIDAD DEL PERSONAL MÉDICO');
         crearGrafico('chartCordialidadMed', Object.keys(cordialidad3), Object.values(cordialidad3), 'bar', 'Cordialidad Personal Médico');
 
-        // --- GRÁFICO 3: TIEMPO DE LA CONSULTA (CORREGIDO A TORTA) ---
-        // Se usa la variable exacta: TIEMPO DE LA CONSULTA
-        const tiempoConsulta = contarCategorias('TIEMPO DE LA CONSULTA');
-        delete tiempoConsulta['Sin dato'];
-        crearGrafico('chartTiempoConsulta', Object.keys(tiempoConsulta), Object.values(tiempoConsulta), 'pie', 'Tiempo de Consulta');
+        // Tiempo de Consulta — torta pastel con categorías reales, sin 'Sin dato'
+        (function(){
+            var contador = {};
+            datosGlobales.forEach(function(r) {
+                var val = '';
+                Object.keys(r).forEach(function(k) {
+                    if (k.toLowerCase().trim() === 'tiempo de consulta') val = (r[k] || '').trim();
+                });
+                if (!val) return;
+                contador[val] = (contador[val] || 0) + 1;
+            });
+            var labels = Object.keys(contador);
+            var datos = labels.map(function(k){ return contador[k]; });
+            crearGraficoPastel('chartTiempoConsulta', labels, datos);
+        })();
 
-        // El resto de los gráficos univariados se mantienen sin cambios
         const atencFarmacia = contarCategorias('ATENCIÓN DE ENCARGADO DE FARMACIAS');
         crearGrafico('chartAtenciónFarmacia', Object.keys(atencFarmacia), Object.values(atencFarmacia), 'bar', 'Atención Farmacia');
 
+        // Tiempos
         const ultimaConsulta = contarCategorias('ÚLTIMA CONSULTA REALIZADA POR');
         crearGrafico('chartUltimaConsulta', Object.keys(ultimaConsulta), Object.values(ultimaConsulta), 'pie', 'Tipo de Consulta');
 
@@ -1024,6 +1055,7 @@
         const cordialidadEstudios = contarCategorias('CORDIALIDAD DEL ENCARGADO DE ESTUDIOS MÉDICOS');
         crearGrafico('chartCordialidadEstudios', Object.keys(cordialidadEstudios), Object.values(cordialidadEstudios), 'bar', 'Cordialidad Estudios');
 
+        // Infraestructura
         const valoracion = contarCategorias('VALORACIÓN VISUAL FÍSICA HOSPITAL');
         crearGrafico('chartValoracionFisica', Object.keys(valoracion), Object.values(valoracion), 'doughnut', 'Valoración Física');
 
@@ -1036,7 +1068,7 @@
         const seguridad = contarCategorias('SEGURIDAD DENTRO DEL HOSPITAL');
         crearGrafico('chartSeguridad', Object.keys(seguridad), Object.values(seguridad), 'doughnut', 'Seguridad');
     }
-    
+
     // CRUCES DE VARIABLES
     function actualizarCrucesVariables() {
         // 1. Establecimiento × Satisfacción General
@@ -1262,80 +1294,6 @@ contador[valor] = (contador[valor] || 0) + 1;
     }
 
     // GRÁFICOS
-    // Paleta pastel sin rojos ni azules — para los tres gráficos nuevos tipo torta
-    const PASTEL_PALETTE = [
-        'rgba(134, 200, 158, 0.85)',
-        'rgba(255, 209, 102, 0.85)',
-        'rgba(178, 223, 219, 0.85)',
-        'rgba(255, 179, 128, 0.85)',
-        'rgba(200, 162, 200, 0.85)',
-        'rgba(161, 218, 180, 0.85)',
-        'rgba(255, 236, 153, 0.85)',
-        'rgba(144, 213, 208, 0.85)',
-    ];
-    const PASTEL_BORDERS = [
-        'rgba(80, 160, 110, 1)',
-        'rgba(210, 160, 40, 1)',
-        'rgba(90, 170, 160, 1)',
-        'rgba(210, 120, 60, 1)',
-        'rgba(150, 100, 150, 1)',
-        'rgba(90, 170, 120, 1)',
-        'rgba(200, 180, 80, 1)',
-        'rgba(70, 160, 155, 1)',
-    ];
-
-    function crearGraficoPasteles(id, labels, datos, titulo) {
-        const ctx = document.getElementById(id);
-        if (!ctx) return;
-        if (chartsInstances[id]) chartsInstances[id].destroy();
-
-        const bgColors = labels.map((_, i) => PASTEL_PALETTE[i % PASTEL_PALETTE.length]);
-        const brColors = labels.map((_, i) => PASTEL_BORDERS[i % PASTEL_BORDERS.length]);
-
-        chartsInstances[id] = new Chart(ctx, {
-            type: 'pie',
-            data: {
-                labels: labels,
-                datasets: [{
-                    label: titulo,
-                    data: datos,
-                    backgroundColor: bgColors,
-                    borderColor: brColors,
-                    borderWidth: 2,
-                    hoverOffset: 12
-                }]
-            },
-            options: {
-                responsive: true,
-                maintainAspectRatio: false,
-                plugins: {
-                    legend: {
-                        position: 'bottom',
-                        labels: {
-                            padding: 16,
-                            font: { size: 12, weight: '600' },
-                            usePointStyle: true,
-                            pointStyle: 'circle'
-                        }
-                    },
-                    tooltip: {
-                        backgroundColor: 'rgba(40,40,40,0.92)',
-                        padding: 12,
-                        titleFont: { size: 14 },
-                        bodyFont: { size: 13 },
-                        callbacks: {
-                            label: function(context) {
-                                const total = context.dataset.data.reduce((a, b) => a + b, 0);
-                                const pct = total > 0 ? ((context.parsed / total) * 100).toFixed(1) : 0;
-                                return ' ' + context.label + ': ' + context.parsed + ' (' + pct + '%)';
-                            }
-                        }
-                    }
-                }
-            }
-        });
-    }
-
     function crearGrafico(id, labels, datos, tipo, titulo) {
         const ctx = document.getElementById(id);
         if (!ctx) return;
@@ -1368,6 +1326,45 @@ contador[valor] = (contador[valor] || 0) + 1;
                     y: { beginAtZero: true, grid: { color: 'rgba(0,0,0,0.05)' } },
                     x: { grid: { display: false } }
                 } : {}
+            }
+        });
+    }
+
+    // Paleta pastel sin rojo ni azul
+    const PASTEL = [
+        'rgba(134,200,158,0.88)', 'rgba(255,209,102,0.88)', 'rgba(178,223,219,0.88)',
+        'rgba(255,179,128,0.88)', 'rgba(200,162,200,0.88)', 'rgba(144,213,208,0.88)',
+        'rgba(255,236,153,0.88)', 'rgba(161,218,180,0.88)'
+    ];
+    const PASTEL_BD = [
+        'rgba(70,150,100,1)', 'rgba(200,155,30,1)', 'rgba(80,160,155,1)',
+        'rgba(200,110,50,1)', 'rgba(140,90,140,1)', 'rgba(60,155,148,1)',
+        'rgba(190,170,60,1)', 'rgba(80,160,110,1)'
+    ];
+    function crearGraficoPastel(id, labels, datos) {
+        const ctx = document.getElementById(id);
+        if (!ctx) return;
+        if (chartsInstances[id]) chartsInstances[id].destroy();
+        const bg = labels.map(function(_,i){ return PASTEL[i % PASTEL.length]; });
+        const bd = labels.map(function(_,i){ return PASTEL_BD[i % PASTEL_BD.length]; });
+        chartsInstances[id] = new Chart(ctx, {
+            type: 'pie',
+            data: { labels: labels, datasets: [{ data: datos, backgroundColor: bg, borderColor: bd, borderWidth: 2, hoverOffset: 14 }] },
+            options: {
+                responsive: true, maintainAspectRatio: false,
+                plugins: {
+                    legend: { position: 'bottom', labels: { padding: 14, font: { size: 12, weight: '600' }, usePointStyle: true, pointStyle: 'circle' } },
+                    tooltip: {
+                        backgroundColor: 'rgba(30,30,30,0.92)', padding: 12,
+                        callbacks: {
+                            label: function(ctx) {
+                                var total = ctx.dataset.data.reduce(function(a,b){return a+b;},0);
+                                var pct = total > 0 ? ((ctx.parsed/total)*100).toFixed(1) : '0.0';
+                                return ' ' + ctx.label + ': ' + ctx.parsed + '  (' + pct + '%)';
+                            }
+                        }
+                    }
+                }
             }
         });
     }
